@@ -2,6 +2,7 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as patheffects
 import supersuit as ss
 import datetime
 import json
@@ -1119,6 +1120,7 @@ def _clone_eval_render_meta(render_meta):
                 {
                     "task_id": str(task.get("task_id", "")),
                     "label": str(task.get("label", task.get("task_id", ""))),
+                    "task_type": str(task.get("task_type", "")),
                     "position": np.asarray(task.get("position", []), dtype=np.float32).copy(),
                     "position_geo": dict(task.get("position_geo", {}))
                     if isinstance(task.get("position_geo"), dict)
@@ -1154,6 +1156,13 @@ def _clone_eval_render_meta(render_meta):
     inactive_agents = render_meta.get("inactive_agents")
     if isinstance(inactive_agents, (list, tuple, set)):
         cloned["inactive_agents"] = [str(agent) for agent in inactive_agents]
+
+    agent_types = render_meta.get("agent_types")
+    if isinstance(agent_types, dict):
+        cloned["agent_types"] = {
+            str(agent): str(agent_type)
+            for agent, agent_type in agent_types.items()
+        }
 
     task_status_panel = render_meta.get("task_status_panel")
     if isinstance(task_status_panel, (list, tuple)):
@@ -1197,6 +1206,56 @@ def _format_queue_for_panel(queue, max_items=3):
     if len(queue) > max_items:
         shown.append("...")
     return " -> ".join(shown) if shown else "idle"
+
+
+_AGENT_TYPE_SYMBOLS = {
+    "侦察": ("▲", "R", "#2E86DE"),
+    "打击": ("■", "A", "#E74C3C"),
+    "察打一体": ("◆", "M", "#8E44AD"),
+}
+
+_TASK_TYPE_SYMBOLS = {
+    "侦察": ("◎", "R", "#16A085"),
+    "打击": ("✦", "A", "#D35400"),
+    "察打一体": ("◈", "M", "#7D3C98"),
+}
+
+
+def _resolve_type_badge(type_name, badge_map, fallback_symbol):
+    type_name = str(type_name or "").strip()
+    symbol, short_label, color = badge_map.get(type_name, (fallback_symbol, "?", "#34495E"))
+    return {
+        "type_name": type_name,
+        "symbol": symbol,
+        "short_label": short_label,
+        "color": color,
+        "text": f"{symbol}{short_label}",
+    }
+
+
+def _draw_type_badge(ax, x, y, text, color, *, dx=0.0, dy=0.0, fontsize=9, zorder=20):
+    artist = ax.text(
+        float(x + dx),
+        float(y + dy),
+        str(text),
+        color="white",
+        fontsize=fontsize,
+        fontweight="bold",
+        ha="center",
+        va="center",
+        zorder=zorder,
+        bbox={
+            "boxstyle": "round,pad=0.22",
+            "facecolor": color,
+            "edgecolor": "white",
+            "linewidth": 0.8,
+            "alpha": 0.95,
+        },
+    )
+    artist.set_path_effects([
+        patheffects.withStroke(linewidth=1.4, foreground="black", alpha=0.25)
+    ])
+    return artist
 
 
 def _draw_task_status_panels(ax2d, render_meta):
@@ -1685,6 +1744,7 @@ def _plot_waypoint_env(
     visible_tasks = render_meta.get("visible_tasks", []) if isinstance(render_meta, dict) else []
     global_subgoals = render_meta.get("global_subgoals", {}) if isinstance(render_meta, dict) else {}
     global_routes = render_meta.get("global_routes", {}) if isinstance(render_meta, dict) else {}
+    agent_types = render_meta.get("agent_types", {}) if isinstance(render_meta, dict) else {}
     if isinstance(geo_origin, dict):
         geo_text = (
             f"ENU origin -> lat {float(geo_origin.get('origin_lat', 0.0)):.3f}, "
@@ -1805,6 +1865,36 @@ def _plot_waypoint_env(
                 edgecolors="white",
                 linewidths=0.6,
             )
+        task_badge = _resolve_type_badge(task.get("task_type", ""), _TASK_TYPE_SYMBOLS, "●")
+        _draw_type_badge(
+            ax2d,
+            task_position[0],
+            task_position[1],
+            task_badge["text"],
+            task_badge["color"],
+            dx=1.2,
+            dy=1.1,
+            fontsize=7.5,
+            zorder=13,
+        )
+        ax3d.text(
+            task_position[0],
+            task_position[1],
+            task_position[2] + 0.35,
+            task_badge["text"],
+            color=task_badge["color"],
+            fontsize=7.5,
+            fontweight="bold",
+            ha="center",
+            va="bottom",
+            bbox={
+                "boxstyle": "round,pad=0.18",
+                "facecolor": "white",
+                "edgecolor": task_badge["color"],
+                "alpha": 0.88,
+                "linewidth": 0.8,
+            },
+        )
 
     for agent in env.possible_agents:
         if agent in inactive_agents:
@@ -1829,6 +1919,7 @@ def _plot_waypoint_env(
             np.asarray(point, dtype=np.float32).copy()
             for point in global_routes.get(agent, [])
         ]
+        agent_badge = _resolve_type_badge(agent_types.get(agent, ""), _AGENT_TYPE_SYMBOLS, "○")
 
         marker = "X" if is_collided else ("^" if is_done else "o")
         alpha = 0.95 if (is_active or is_done) else 0.45
@@ -2006,6 +2097,35 @@ def _plot_waypoint_env(
                     alpha=alpha,
                     label=agent,
                 )
+        _draw_type_badge(
+            ax2d,
+            position[0],
+            position[1],
+            agent_badge["text"],
+            agent_badge["color"],
+            dx=1.35,
+            dy=-1.25,
+            fontsize=7.8,
+            zorder=14,
+        )
+        ax3d.text(
+            position[0],
+            position[1],
+            position[2] + 0.45,
+            f"{agent_badge['symbol']}{agent_badge['short_label']}",
+            color=agent_badge["color"],
+            fontsize=8.0,
+            fontweight="bold",
+            ha="center",
+            va="bottom",
+            bbox={
+                "boxstyle": "round,pad=0.2",
+                "facecolor": "white",
+                "edgecolor": agent_badge["color"],
+                "alpha": 0.9,
+                "linewidth": 0.9,
+            },
+        )
         ax2d.scatter(target[0], target[1], color=color, marker="*", s=120, alpha=0.9)
         ax2d.plot([position[0], target[0]], [position[1], target[1]], color=color, linestyle="--", alpha=0.3)
         if route_points:

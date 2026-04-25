@@ -2036,6 +2036,7 @@ def build_tasks_from_specs(task_points, task_specs):   #
             "position": task_position,
             "agents": [str(agent) for agent in spec.get("agents", [])],
             "label": spec.get("label", task_id),
+            "task_type": str(spec.get("task_type", "")),
             "active": bool(spec.get("active", True)),
             "completed": bool(spec.get("completed", False)),
         }
@@ -2053,6 +2054,7 @@ def _build_serializable_task_info(task_id, task):   # 构建可直接查询/打�
         "position_geo": _attach_geo_to_point_payload(task.get("position", []), geo_origin),
         "agents": [str(agent) for agent in task.get("agents", [])],
         "label": task.get("label", str(task_id)),
+        "task_type": str(task.get("task_type", "")),
         "active": bool(task.get("active", True)),
         "completed": bool(task.get("completed", False)),
     }
@@ -2462,6 +2464,7 @@ def build_render_visible_tasks(state):  # 渲染当前已出现但未完成的�
             {
                 "task_id": str(task_id),
                 "label": str(task.get("label", task_id)),
+                "task_type": str(task.get("task_type", "")),
                 "position": np.asarray(task.get("position", []), dtype=np.float32).copy(),
                 "position_geo": _attach_geo_to_point_payload(task.get("position", []), geo_origin),
                 "completed": bool(task.get("completed", False)),
@@ -2522,6 +2525,10 @@ def build_render_meta(state):   # 构建渲染meta
     global_routes = {}
     geo_origin = state.get("geo_origin")
     inactive_agents = {str(agent) for agent in state.get("inactive_agents", set())}
+    agent_types = {
+        str(agent): str(agent_type)
+        for agent, agent_type in state.get("agent_types", {}).items()
+    }
     for agent, subgoal in state.get("global_plan_subgoals", {}).items():
         if str(agent) in inactive_agents:
             continue
@@ -2539,6 +2546,7 @@ def build_render_meta(state):   # 构建渲染meta
         "task_paths": build_render_task_paths(state),
         "visible_tasks": build_render_visible_tasks(state),
         "global_subgoals": global_subgoals,
+        "agent_types": agent_types,
         "global_subgoals_geo": {
             str(agent): _attach_geo_to_point_payload(subgoal, geo_origin)
             for agent, subgoal in global_subgoals.items()
@@ -2630,7 +2638,7 @@ def normalize_task_specs(task_specs):
             "task_id": task_id,
             "agents": [str(agent) for agent in spec.get("agents", [])],
         }
-        for key in ("label", "active", "completed"):
+        for key in ("label", "active", "completed", "task_type"):
             if key in spec:
                 normalized_spec[key] = spec[key]
         normalized.append(normalized_spec)

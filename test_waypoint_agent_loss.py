@@ -149,6 +149,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
     return {
         "tasks": tasks,
         "agent_queues": agent_queues,
+        "agent_types": dict(provider_payload.get("_platform_types", {})),
         "inactive_agents": set(),
         "event_log": [],
         "loss_triggered": False,

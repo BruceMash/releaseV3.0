@@ -1,0 +1,293 @@
+{
+  "run_name": "eval_20260413_170544",
+  "terrain": {
+    "type": "CSVTerrainMap",
+    "csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "target_extent": [
+      100.0,
+      100.0
+    ],
+    "target_height": null,
+    "resolution": 1.0,
+    "origin": [
+      0.0,
+      0.0
+    ]
+  },
+  "space_dim": [
+    100.0,
+    100.0,
+    50.0
+  ],
+  "obstacle_rule": "hybrid",
+  "obstacles": [
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 41.01823953489486,
+      "y": 33.090992224624884,
+      "z": 0.028803087770938873,
+      "radius": 9.769705660625013,
+      "height": 10.0
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 68.1751885885325,
+      "y": 62.566649048636165,
+      "z": 0.004732806701213121,
+      "radius": 5.729239804768792,
+      "height": 10.0
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 81.90148273118056,
+      "y": 70.39328077473988,
+      "z": 0.0,
+      "radius": 8.099601562296739,
+      "height": 10.0
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 24.358405698550595,
+      "y": 74.12404009189952,
+      "z": 0.0008038460509851575,
+      "radius": 7.329541704378175,
+      "height": 10.0
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 59.85284333471934,
+      "y": 19.941917533251853,
+      "z": 0.00619876803830266,
+      "radius": 7.9108232534638745,
+      "height": 10.0
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 82.37853803915195,
+      "y": 33.13255342401833,
+      "z": 0.024461179971694946,
+      "radius": 7.056076572254637,
+      "height": 10.0
+    }
+  ],
+  "agents": {
+    "agent_0": {
+      "start": [
+        66.50088500976562,
+        35.12074661254883,
+        13.814107894897461
+      ],
+      "target": [
+        47.91058349609375,
+        66.71111297607422,
+        0.5099999904632568
+      ],
+      "initial_distance": 38.99422836303711
+    },
+    "agent_1": {
+      "start": [
+        15.896910667419434,
+        49.55952835083008,
+        14.582026481628418
+      ],
+      "target": [
+        66.8969955444336,
+        31.524187088012695,
+        0.5360646843910217
+      ],
+      "initial_distance": 55.888916015625
+    },
+    "agent_2": {
+      "start": [
+        88.27076721191406,
+        52.46935272216797,
+        20.14937400817871
+      ],
+      "target": [
+        96.03150939941406,
+        86.77581024169922,
+        0.5099999904632568
+      ],
+      "initial_distance": 40.28482437133789
+    },
+    "agent_3": {
+      "start": [
+        40.861995697021484,
+        49.519256591796875,
+        26.011089324951172
+      ],
+      "target": [
+        33.76935958862305,
+        84.40321350097656,
+        0.5099999904632568
+      ],
+      "initial_distance": 43.78928756713867
+    },
+    "agent_4": {
+      "start": [
+        42.557376861572266,
+        56.51401901245117,
+        29.808061599731445
+      ],
+      "target": [
+        2.4503114223480225,
+        65.23062896728516,
+        0.5152329206466675
+      ],
+      "initial_distance": 50.42445755004883
+    },
+    "agent_5": {
+      "start": [
+        69.32423400878906,
+        99.05241394042969,
+        35.50460433959961
+      ],
+      "target": [
+        13.796602249145508,
+        65.19422149658203,
+        0.5165513157844543
+      ],
+      "initial_distance": 73.85025024414062
+    },
+    "agent_6": {
+      "start": [
+        55.73720932006836,
+        83.4568099975586,
+        37.81645202636719
+      ],
+      "target": [
+        78.58726501464844,
+        51.696868896484375,
+        0.5149691104888916
+      ],
+      "initial_distance": 54.05755615234375
+    },
+    "agent_7": {
+      "start": [
+        86.28041076660156,
+        86.69004821777344,
+        42.83039474487305
+      ],
+      "target": [
+        67.3776626586914,
+        89.47218322753906,
+        0.5099999904632568
+      ],
+      "initial_distance": 46.433502197265625
+    },
+    "agent_8": {
+      "start": [
+        7.569093704223633,
+        52.20050048828125,
+        38.95718002319336
+      ],
+      "target": [
+        39.978851318359375,
+        52.979732513427734,
+        0.5159887671470642
+      ],
+      "initial_distance": 50.28643035888672
+    },
+    "agent_9": {
+      "start": [
+        62.190425872802734,
+        48.818511962890625,
+        39.021331787109375
+      ],
+      "target": [
+        28.53373908996582,
+        54.193572998046875,
+        0.5102365016937256
+      ],
+      "initial_distance": 51.427310943603516
+    }
+  },
+  "args": {
+    "config_json": "",
+    "mode": "eval",
+    "n_agents": 10,
+    "max_steps": 3000,
+    "model_dir": null,
+    "eval_model_path": "sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+    "space_x": 100.0,
+    "space_y": 100.0,
+    "space_z": 50.0,
+    "obstacle_rule": "hybrid",
+    "num_obstacles": 6,
+    "eval_freq": 10000,
+    "hemisphere_fraction": 0.5,
+    "obs_radius_min": 2.0,
+    "obs_radius_max": 8.0,
+    "obs_height_min": 10.0,
+    "obs_height_max": 40.0,
+    "hemisphere_radius_min": 4.0,
+    "hemisphere_radius_max": 10.0,
+    "hemisphere_height_min": 10.0,
+    "hemisphere_height_max": 10.0,
+    "terrain_enabled": true,
+    "terrain_source": "csv",
+    "terrain_csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "terrain_grid_resolution": 1.0,
+    "terrain_csv_target_x": 100.0,
+    "terrain_csv_target_y": 100.0,
+    "terrain_csv_target_z": null,
+    "terrain_csv_z_scale": 0.001,
+    "terrain_origin_x": 0.0,
+    "terrain_origin_y": 0.0,
+    "terrain_min_clearance": 0.01,
+    "terrain_max_clearance": 1.0,
+    "terrain_match_space_dim": true,
+    "terrain_spawn_clearance": 0.1,
+    "ground_target_clearance": 0.5,
+    "lidar_step_size": null,
+    "lidar_rays": 24,
+    "lidar_range": 0.4,
+    "terrain_num_hemispheres": 0,
+    "terrain_radius_min": 5.0,
+    "terrain_radius_max": 10.0,
+    "terrain_height_min": 10.0,
+    "terrain_height_max": 10.0,
+    "uav_speed": 0.06,
+    "decision_period": 1.0,
+    "goal_threshold": 1.0,
+    "step_penalty": -0.02,
+    "progress_reward_scale": 2.0,
+    "obstacle_collision_penalty": 80,
+    "agent_collision_penalty": 160,
+    "goal_reward": 1500,
+    "timeout_penalty_scale": 10,
+    "collision_radius": 0.02,
+    "hemisphere_exclusion_buffer": 5.0,
+    "avoid_mountain_basins": true,
+    "basin_window_radius": 4,
+    "basin_highland_threshold": 20.0,
+    "basin_relief_threshold": 3.0,
+    "basin_high_neighbor_ratio": 0.35,
+    "total_timesteps": 4000000,
+    "run_id": "",
+    "resume_run_id": "",
+    "resume_model_path": "",
+    "eval_smoothing": 0.65,
+    "eval_goal_blend": 0.2,
+    "eval_gif_fps": 10,
+    "eval_render_every": 5,
+    "eval_capture_every": 5,
+    "eval_history_stride": 3,
+    "eval_terrain_stride": 2,
+    "eval_pause": 0.0,
+    "device": "cuda",
+    "eval_emergency_avoidance": true,
+    "eval_emergency_lidar_threshold": 0.35,
+    "eval_emergency_max_blend": 0.85,
+    "eval_emergency_repulsion_power": 2.0,
+    "eval_emergency_speed_scale_min": 0.2,
+    "eval_emergency_speed_scale_max": 1.0,
+    "eval_min_safe_agl": 0.2
+  }
+}

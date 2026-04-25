@@ -1,0 +1,555 @@
+{
+  "run_name": "agent_loss_20260414_235109",
+  "scenario_name": "agent_loss",
+  "model_path": "sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+  "terrain": {
+    "type": "CSVTerrainMap",
+    "csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "target_extent": [
+      100.0,
+      100.0
+    ],
+    "target_height": 100.0,
+    "resolution": 1.0,
+    "origin": [
+      0.0,
+      0.0
+    ]
+  },
+  "space_dim": [
+    100.0,
+    100.0,
+    30.0
+  ],
+  "obstacle_rule": "hybrid",
+  "obstacles": [
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 40.0,
+      "y": 18.0,
+      "z": 0.09700720012187958,
+      "radius": 6.175602036287321,
+      "height": 9.824854997680635
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 46.0,
+      "y": 46.0,
+      "z": 0.09454900771379471,
+      "radius": 9.725241118963968,
+      "height": 9.242004404188442
+    },
+    {
+      "kind": "cylinder",
+      "type": "CylinderObstacle",
+      "x": 54.0,
+      "y": 78.0,
+      "radius": 7.361619981442011,
+      "height": 9.207383574491987
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 70.0,
+      "y": 30.0,
+      "z": 0.09088971465826035,
+      "radius": 5.655553211739569,
+      "height": 6.5436682864891775
+    },
+    {
+      "kind": "cylinder",
+      "type": "CylinderObstacle",
+      "x": 78.0,
+      "y": 64.0,
+      "radius": 7.314981970772085,
+      "height": 8.709236003417335
+    }
+  ],
+  "args": {
+    "seed": 7,
+    "config_json": "",
+    "model_root": "./sb3_models_waypoint",
+    "run_id": "",
+    "eval_model_path": "sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+    "assignment_provider_module": "",
+    "assignment_provider_callable": "",
+    "assignment_provider_model_path": "",
+    "assignment_provider_device": "cpu",
+    "device": "cpu",
+    "output_dir": "",
+    "save_artifacts": true,
+    "render": false,
+    "eval_render_mode": false,
+    "eval_pause": 0.03,
+    "eval_render_every": 5,
+    "eval_capture_every": 5,
+    "eval_gif_fps": 10,
+    "eval_history_stride": 3,
+    "eval_terrain_stride": 2,
+    "n_agents": 10,
+    "task_count": 16,
+    "max_steps": 4000,
+    "assignment_json": "",
+    "scenario_json": "Configs\\fixed_task_scenarios\\scenario_B.json",
+    "space_x": 100.0,
+    "space_y": 100.0,
+    "space_z": 30.0,
+    "terrain_enabled": true,
+    "terrain_source": "csv",
+    "terrain_csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "terrain_csv_target_x": 100.0,
+    "terrain_csv_target_y": 100.0,
+    "terrain_csv_target_z": 100.0,
+    "terrain_csv_z_scale": 0.001,
+    "terrain_grid_resolution": 1.0,
+    "terrain_min_clearance": 0.2,
+    "terrain_max_clearance": 1.0,
+    "terrain_match_space_dim": true,
+    "terrain_spawn_clearance": 0.1,
+    "spawn_max_height": 30.0,
+    "ground_target_clearance": 0.2,
+    "obstacle_rule": "hybrid",
+    "num_obstacles": 0,
+    "scenario_obstacle_count": 6,
+    "terrain_num_hemispheres": 0,
+    "terrain_radius_min": 5.0,
+    "terrain_radius_max": 10.0,
+    "terrain_height_min": 5.0,
+    "terrain_height_max": 10.0,
+    "lowland_height_threshold": 10.0,
+    "lowland_cylinder_radius_min": 5.0,
+    "lowland_cylinder_radius_max": 10.0,
+    "lowland_cylinder_height_min": 5.0,
+    "lowland_cylinder_height_max": 10.0,
+    "spawn_min_height_buffer": 8.0,
+    "task_min_obstacle_clearance": 10.0,
+    "obstacle_min_spacing": 12.0,
+    "uav_speed": 0.06,
+    "decision_period": 1.0,
+    "lidar_rays": 24,
+    "lidar_range": 0.6,
+    "goal_threshold": 1.0,
+    "collab_slot_obstacle_buffer": 2.0,
+    "step_penalty": -0.01,
+    "progress_reward_scale": 2.0,
+    "obstacle_collision_penalty": 80.0,
+    "agent_collision_penalty": 160.0,
+    "goal_reward": 1500.0,
+    "timeout_penalty_scale": 40.0,
+    "collision_radius": 0.02,
+    "near_goal_collision_free_radius": 1.0,
+    "hemisphere_exclusion_buffer": 5.0,
+    "avoid_mountain_basins": true,
+    "basin_window_radius": 4,
+    "basin_highland_threshold": 20.0,
+    "basin_relief_threshold": 3.0,
+    "basin_high_neighbor_ratio": 0.35,
+    "agent_loss_step": 300,
+    "lost_agents": "agent_2,agent_7",
+    "_assignment_provider": null,
+    "_assignment_provider_loaded": true
+  },
+  "scenario_state": {
+    "task_count": 16,
+    "inactive_agents": [],
+    "event_log": [],
+    "tasks": {
+      "task_01": {
+        "position": [
+          60.0,
+          8.0,
+          0.299371600151062
+        ],
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_01",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_02": {
+        "position": [
+          78.0,
+          14.0,
+          0.21440958976745605
+        ],
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_02",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_03": {
+        "position": [
+          94.0,
+          10.0,
+          0.20000000298023224
+        ],
+        "agents": [
+          "agent_2"
+        ],
+        "label": "task_03",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_04": {
+        "position": [
+          98.0,
+          24.0,
+          0.29359447956085205
+        ],
+        "agents": [
+          "agent_3"
+        ],
+        "label": "task_04",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_05": {
+        "position": [
+          56.0,
+          34.0,
+          0.29282453656196594
+        ],
+        "agents": [
+          "agent_4"
+        ],
+        "label": "task_05",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_06": {
+        "position": [
+          74.0,
+          40.0,
+          0.27013593912124634
+        ],
+        "agents": [
+          "agent_5"
+        ],
+        "label": "task_06",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_07": {
+        "position": [
+          92.0,
+          34.0,
+          0.2883242666721344
+        ],
+        "agents": [
+          "agent_6"
+        ],
+        "label": "task_07",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_08": {
+        "position": [
+          98.0,
+          48.0,
+          0.26203763484954834
+        ],
+        "agents": [
+          "agent_7"
+        ],
+        "label": "task_08",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_09": {
+        "position": [
+          56.0,
+          58.0,
+          0.27341336011886597
+        ],
+        "agents": [
+          "agent_8"
+        ],
+        "label": "task_09",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_10": {
+        "position": [
+          64.0,
+          68.0,
+          0.20000000298023224
+        ],
+        "agents": [
+          "agent_9"
+        ],
+        "label": "task_10",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_11": {
+        "position": [
+          90.0,
+          58.0,
+          0.2175019532442093
+        ],
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_11",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_12": {
+        "position": [
+          98.0,
+          72.0,
+          0.2175648808479309
+        ],
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_12",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_13": {
+        "position": [
+          65.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "agents": [
+          "agent_2"
+        ],
+        "label": "task_13",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_14": {
+        "position": [
+          65.0,
+          62.0,
+          0.21755450963974
+        ],
+        "agents": [
+          "agent_3"
+        ],
+        "label": "task_14",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_15": {
+        "position": [
+          90.0,
+          86.0,
+          0.20000000298023224
+        ],
+        "agents": [
+          "agent_4"
+        ],
+        "label": "task_15",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_16": {
+        "position": [
+          98.0,
+          96.0,
+          0.20000000298023224
+        ],
+        "agents": [
+          "agent_5"
+        ],
+        "label": "task_16",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      }
+    },
+    "agent_queues": {
+      "agent_0": [
+        "task_01",
+        "task_11"
+      ],
+      "agent_1": [
+        "task_02",
+        "task_12"
+      ],
+      "agent_2": [
+        "task_03",
+        "task_13"
+      ],
+      "agent_3": [
+        "task_04",
+        "task_14"
+      ],
+      "agent_4": [
+        "task_05",
+        "task_15"
+      ],
+      "agent_5": [
+        "task_06",
+        "task_16"
+      ],
+      "agent_6": [
+        "task_07"
+      ],
+      "agent_7": [
+        "task_08"
+      ],
+      "agent_8": [
+        "task_09"
+      ],
+      "agent_9": [
+        "task_10"
+      ]
+    }
+  },
+  "agents": {
+    "agent_0": {
+      "start": [
+        6.0,
+        14.0,
+        16.0
+      ],
+      "current_target": [
+        60.0,
+        8.0,
+        0.299371600151062
+      ],
+      "initial_distance": 56.55537033081055
+    },
+    "agent_1": {
+      "start": [
+        18.0,
+        24.0,
+        18.0
+      ],
+      "current_target": [
+        78.0,
+        14.0,
+        0.21440958976745605
+      ],
+      "initial_distance": 63.3745002746582
+    },
+    "agent_2": {
+      "start": [
+        34.0,
+        10.0,
+        15.0
+      ],
+      "current_target": [
+        94.0,
+        10.0,
+        0.20000000298023224
+      ],
+      "initial_distance": 61.79838180541992
+    },
+    "agent_3": {
+      "start": [
+        8.0,
+        40.0,
+        17.0
+      ],
+      "current_target": [
+        98.0,
+        24.0,
+        0.29359447956085205
+      ],
+      "initial_distance": 92.92525482177734
+    },
+    "agent_4": {
+      "start": [
+        26.0,
+        34.0,
+        19.0
+      ],
+      "current_target": [
+        56.0,
+        34.0,
+        0.29282453656196594
+      ],
+      "initial_distance": 35.35475158691406
+    },
+    "agent_5": {
+      "start": [
+        42.0,
+        26.0,
+        16.0
+      ],
+      "current_target": [
+        74.0,
+        40.0,
+        0.27013593912124634
+      ],
+      "initial_distance": 38.307029724121094
+    },
+    "agent_6": {
+      "start": [
+        10.0,
+        62.0,
+        18.0
+      ],
+      "current_target": [
+        92.0,
+        34.0,
+        0.2883242666721344
+      ],
+      "initial_distance": 88.44039916992188
+    },
+    "agent_7": {
+      "start": [
+        30.0,
+        58.0,
+        20.0
+      ],
+      "current_target": [
+        98.0,
+        48.0,
+        0.26203763484954834
+      ],
+      "initial_distance": 71.50934600830078
+    },
+    "agent_8": {
+      "start": [
+        8.0,
+        84.0,
+        17.0
+      ],
+      "current_target": [
+        56.0,
+        58.0,
+        0.27341336011886597
+      ],
+      "initial_distance": 57.0944709777832
+    },
+    "agent_9": {
+      "start": [
+        34.0,
+        78.0,
+        19.0
+      ],
+      "current_target": [
+        64.0,
+        68.0,
+        0.20000000298023224
+      ],
+      "initial_distance": 36.789127349853516
+    }
+  }
+}

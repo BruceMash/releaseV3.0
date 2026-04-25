@@ -1,0 +1,568 @@
+{
+  "run_name": "dynamic_task_increase_20260423_000448",
+  "scenario_name": "dynamic_task_increase",
+  "model_path": ".\\sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+  "terrain": {
+    "type": "CSVTerrainMap",
+    "csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "target_extent": [
+      100.0,
+      100.0
+    ],
+    "target_height": 100.0,
+    "resolution": 1.0,
+    "origin": [
+      0.0,
+      0.0
+    ]
+  },
+  "space_dim": [
+    100.0,
+    100.0,
+    15.0
+  ],
+  "obstacle_rule": "hybrid",
+  "obstacles": [
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 28.541866161856824,
+      "y": 14.700189167107615,
+      "z": 0.09198785573244095,
+      "radius": 6.407669089242469,
+      "height": 9.039354232267758
+    },
+    {
+      "kind": "cylinder",
+      "type": "CylinderObstacle",
+      "x": 70.99798845100464,
+      "y": 20.122632563504744,
+      "radius": 6.84742957830192,
+      "height": 6.163355478159868
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 79.52919766002711,
+      "y": 52.295609342958734,
+      "z": 0.014848966151475906,
+      "radius": 5.215849677987608,
+      "height": 9.654773388700999
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 22.362247546851457,
+      "y": 46.76848528438274,
+      "z": 0.018677905201911926,
+      "radius": 5.241305742446462,
+      "height": 9.184093285148888
+    }
+  ],
+  "args": {
+    "seed": 7,
+    "config_json": "",
+    "model_root": "./sb3_models_waypoint",
+    "run_id": "",
+    "eval_model_path": ".\\sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+    "use_global_planner": true,
+    "global_planner_model_root": "./sb3_models_waypoint",
+    "global_planner_run_id": "",
+    "global_planner_model_path": "sb3_models_waypoint\\model\\best_model.zip",
+    "global_planner_max_steps": 24,
+    "global_planner_waypoint_stride": 1,
+    "global_fallback_max_steps": 5,
+    "assignment_provider_module": "",
+    "assignment_provider_callable": "",
+    "assignment_provider_model_path": "",
+    "assignment_provider_device": "cpu",
+    "device": "cpu",
+    "output_dir": "",
+    "save_artifacts": true,
+    "render": false,
+    "eval_render_mode": false,
+    "eval_pause": 0.03,
+    "eval_render_every": 5,
+    "eval_capture_every": 5,
+    "eval_gif_fps": 6,
+    "eval_history_stride": 3,
+    "eval_history_smooth_window": 5,
+    "eval_terrain_stride": 2,
+    "n_agents": 10,
+    "task_count": 16,
+    "max_steps": 4000,
+    "assignment_json": "",
+    "scenario_json": "",
+    "space_x": 100.0,
+    "space_y": 100.0,
+    "space_z": 15.0,
+    "terrain_enabled": true,
+    "terrain_source": "csv",
+    "terrain_csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "terrain_csv_target_x": 100.0,
+    "terrain_csv_target_y": 100.0,
+    "terrain_csv_target_z": 100.0,
+    "terrain_csv_z_scale": 0.001,
+    "terrain_grid_resolution": 1.0,
+    "terrain_min_clearance": 0.2,
+    "terrain_max_clearance": 1.0,
+    "terrain_match_space_dim": true,
+    "terrain_spawn_clearance": 0.1,
+    "global_waypoint_switch_threshold": 1.5,
+    "global_waypoint_relaxed_threshold": 1.8,
+    "global_waypoint_stagnation_steps": 10,
+    "global_waypoint_skip_steps": 30,
+    "global_waypoint_progress_reset_threshold": 0.02,
+    "global_waypoint_jitter_tolerance": 0.01,
+    "global_waypoint_hold_steps": 3,
+    "global_waypoint_cooldown_steps": 4,
+    "global_waypoint_smoothing_alpha": 0.25,
+    "global_guidance_smoothing_alpha": 0.35,
+    "global_segment_lookahead_distance": 1.5,
+    "global_segment_min_progress_ratio": 0.2,
+    "eval_turn_limit_deg": 35.0,
+    "spawn_max_height": 30.0,
+    "ground_target_clearance": 0.2,
+    "obstacle_rule": "hybrid",
+    "num_obstacles": 0,
+    "scenario_obstacle_count": 6,
+    "terrain_num_hemispheres": 0,
+    "terrain_radius_min": 5.0,
+    "terrain_radius_max": 10.0,
+    "terrain_height_min": 5.0,
+    "terrain_height_max": 10.0,
+    "lowland_height_threshold": 10.0,
+    "lowland_cylinder_radius_min": 5.0,
+    "lowland_cylinder_radius_max": 10.0,
+    "lowland_cylinder_height_min": 5.0,
+    "lowland_cylinder_height_max": 10.0,
+    "spawn_min_height_buffer": 8.0,
+    "task_min_obstacle_clearance": 10.0,
+    "obstacle_min_spacing": 12.0,
+    "uav_speed": 0.06,
+    "decision_period": 1.0,
+    "lidar_rays": 24,
+    "lidar_range": 0.6,
+    "goal_threshold": 1.0,
+    "collab_slot_obstacle_buffer": 2.0,
+    "step_penalty": -0.01,
+    "progress_reward_scale": 2.0,
+    "obstacle_collision_penalty": 80.0,
+    "agent_collision_penalty": 160.0,
+    "goal_reward": 1500.0,
+    "timeout_penalty_scale": 40.0,
+    "collision_radius": 0.02,
+    "near_goal_collision_free_radius": 1.0,
+    "hemisphere_exclusion_buffer": 5.0,
+    "avoid_mountain_basins": true,
+    "basin_window_radius": 4,
+    "basin_highland_threshold": 20.0,
+    "basin_relief_threshold": 3.0,
+    "basin_high_neighbor_ratio": 0.35,
+    "initial_task_count": 10,
+    "task_increase_step": 300,
+    "_assignment_provider": null,
+    "_assignment_provider_loaded": true
+  },
+  "scenario_state": {
+    "task_count": 16,
+    "inactive_agents": [],
+    "event_log": [
+      "加载全局规划模型: sb3_models_waypoint\\model\\best_model.zip",
+      "检测到任务目标变化，重新生成全局路点",
+      "开始全局预规划，agent 数=10",
+      "全局规划策略决策耗时: total=54.303 ms, avg=0.226 ms/decision, count=240",
+      "全局预规划完成"
+    ],
+    "tasks": {
+      "task_01": {
+        "position": [
+          23.512041091918945,
+          96.49710083007812,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_01",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_02": {
+        "position": [
+          94.50482177734375,
+          84.840087890625,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_02",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_03": {
+        "position": [
+          47.232398986816406,
+          84.14767456054688,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_2"
+        ],
+        "label": "task_03",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_04": {
+        "position": [
+          13.111063957214355,
+          30.87336540222168,
+          0.5
+        ],
+        "agents": [
+          "agent_3"
+        ],
+        "label": "task_04",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_05": {
+        "position": [
+          46.29964065551758,
+          74.18472290039062,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_4"
+        ],
+        "label": "task_05",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_06": {
+        "position": [
+          34.35365295410156,
+          32.4426155090332,
+          0.4962400197982788
+        ],
+        "agents": [
+          "agent_5"
+        ],
+        "label": "task_06",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_07": {
+        "position": [
+          41.490177154541016,
+          44.81206512451172,
+          0.4915861189365387
+        ],
+        "agents": [
+          "agent_6"
+        ],
+        "label": "task_07",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_08": {
+        "position": [
+          77.49003601074219,
+          79.63906860351562,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_7"
+        ],
+        "label": "task_08",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_09": {
+        "position": [
+          77.82135772705078,
+          88.72889709472656,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_8"
+        ],
+        "label": "task_09",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_10": {
+        "position": [
+          35.707061767578125,
+          81.28295135498047,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_9"
+        ],
+        "label": "task_10",
+        "active": true,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_11": {
+        "position": [
+          42.770484924316406,
+          59.985443115234375,
+          0.4156166911125183
+        ],
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_11",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_12": {
+        "position": [
+          5.549950122833252,
+          54.14421463012695,
+          0.482488214969635
+        ],
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_12",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_13": {
+        "position": [
+          60.777076721191406,
+          82.84532165527344,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_2"
+        ],
+        "label": "task_13",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_14": {
+        "position": [
+          23.043067932128906,
+          65.91584014892578,
+          0.41698241233825684
+        ],
+        "agents": [
+          "agent_3"
+        ],
+        "label": "task_14",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_15": {
+        "position": [
+          79.69513702392578,
+          97.51396942138672,
+          0.4120897948741913
+        ],
+        "agents": [
+          "agent_4"
+        ],
+        "label": "task_15",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      },
+      "task_16": {
+        "position": [
+          87.67008972167969,
+          90.91824340820312,
+          0.4000000059604645
+        ],
+        "agents": [
+          "agent_5"
+        ],
+        "label": "task_16",
+        "active": false,
+        "completed": false,
+        "slot_positions": {}
+      }
+    },
+    "agent_queues": {
+      "agent_0": [
+        "task_01"
+      ],
+      "agent_1": [
+        "task_02"
+      ],
+      "agent_2": [
+        "task_03"
+      ],
+      "agent_3": [
+        "task_04"
+      ],
+      "agent_4": [
+        "task_05"
+      ],
+      "agent_5": [
+        "task_06"
+      ],
+      "agent_6": [
+        "task_07"
+      ],
+      "agent_7": [
+        "task_08"
+      ],
+      "agent_8": [
+        "task_09"
+      ],
+      "agent_9": [
+        "task_10"
+      ]
+    }
+  },
+  "agents": {
+    "agent_0": {
+      "start": [
+        7.630828857421875,
+        77.99188232421875,
+        6.74461555480957
+      ],
+      "current_target": [
+        23.512041091918945,
+        96.49710083007812,
+        0.4000000059604645
+      ],
+      "initial_distance": 25.197423934936523
+    },
+    "agent_1": {
+      "start": [
+        53.849586486816406,
+        50.11204528808594,
+        1.4478107690811157
+      ],
+      "current_target": [
+        94.50482177734375,
+        84.840087890625,
+        0.4000000059604645
+      ],
+      "initial_distance": 53.47880935668945
+    },
+    "agent_2": {
+      "start": [
+        67.9229965209961,
+        80.3739013671875,
+        5.899834632873535
+      ],
+      "current_target": [
+        47.232398986816406,
+        84.14767456054688,
+        0.4000000059604645
+      ],
+      "initial_distance": 21.73914337158203
+    },
+    "agent_3": {
+      "start": [
+        2.4899227619171143,
+        60.054893493652344,
+        14.267756462097168
+      ],
+      "current_target": [
+        13.111063957214355,
+        30.87336540222168,
+        0.5
+      ],
+      "initial_distance": 33.969417572021484
+    },
+    "agent_4": {
+      "start": [
+        75.04098510742188,
+        66.90132141113281,
+        7.183827877044678
+      ],
+      "current_target": [
+        46.29964065551758,
+        74.18472290039062,
+        0.4000000059604645
+      ],
+      "initial_distance": 30.416000366210938
+    },
+    "agent_5": {
+      "start": [
+        37.238468170166016,
+        47.740116119384766,
+        5.7199296951293945
+      ],
+      "current_target": [
+        34.35365295410156,
+        32.4426155090332,
+        0.4962400197982788
+      ],
+      "initial_distance": 16.420188903808594
+    },
+    "agent_6": {
+      "start": [
+        31.39946746826172,
+        57.262535095214844,
+        4.357921123504639
+      ],
+      "current_target": [
+        41.490177154541016,
+        44.81206512451172,
+        0.4915861189365387
+      ],
+      "initial_distance": 16.48590850830078
+    },
+    "agent_7": {
+      "start": [
+        65.73994445800781,
+        37.03510665893555,
+        7.08902645111084
+      ],
+      "current_target": [
+        77.49003601074219,
+        79.63906860351562,
+        0.4000000059604645
+      ],
+      "initial_distance": 44.697933197021484
+    },
+    "agent_8": {
+      "start": [
+        42.64535903930664,
+        63.43798828125,
+        7.986721038818359
+      ],
+      "current_target": [
+        77.82135772705078,
+        88.72889709472656,
+        0.4000000059604645
+      ],
+      "initial_distance": 43.9833984375
+    },
+    "agent_9": {
+      "start": [
+        52.4345588684082,
+        69.61604309082031,
+        14.34538459777832
+      ],
+      "current_target": [
+        35.707061767578125,
+        81.28295135498047,
+        0.4000000059604645
+      ],
+      "initial_distance": 24.706268310546875
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "name": "scenario_A",
+  "description": "",
+  "_comment": "固定协同任务场景示例：坐标单位为 km，z 为高度或贴地高度配置值。",
+  "_comment_active_n_agents": "active_n_agents 表示初始可用无人机数量；小于 n_agents 时，后续无人机不参与分配和可视化。",
+  "active_n_agents": 10,
+  "_comment_dynamic_task_increase": "dynamic_task_increase 只会被 test_waypoint_dynamic_task_increase.py 读取并触发；这里只描述任务突发增多，不处理无人机减少。",
+  "dynamic_task_increase": {
+    "_comment": "trigger_step 时激活 injected_task_ids 中的新增任务。",
+    "trigger_step": 300,
+    "initial_task_ids": [
+      "task_01",
+      "task_02",
+      "task_03",
+      "task_04",
+      "task_05",
+      "task_06",
+      "task_07",
+      "task_08",
+      "task_09",
+      "task_10"
+    ],
+    "injected_task_ids": [
+      "task_11",
+      "task_12",
+      "task_13",
+      "task_14",
+      "task_15",
+      "task_16"
+    ]
+  },
+  "_comment_agent_loss": "agent_loss 只会被 test_waypoint_agent_loss.py 读取并触发；用于单独测试无人机减少后的任务重分配。",
+  "agent_loss": {
+    "_comment": "loss_step 时将 lost_agents 标记为不可用；这里等价于从 10 架减少到 6 架。",
+    "loss_step": 300,
+    "lost_agents": [
+      "agent_6",
+      "agent_7",
+      "agent_8",
+      "agent_9"
+    ]
+  },
+  "task_height_mode": "agl",
+  "start_positions": [
+    [8.0, 10.0, 16.0],
+    [20.0, 8.0, 18.0],
+    [34.0, 12.0, 15.0],
+    [8.0, 28.0, 17.0],
+    [24.0, 38.0, 19.0],
+    [40.0, 24.0, 16.0],
+    [10.0, 54.0, 18.0],
+    [26.0, 66.0, 17.0],
+    [12.0, 86.0, 20.0],
+    [34.0, 82.0, 18.0]
+  ],
+  "task_positions": [
+    [58.0, 10.0, 0.2],
+    [74.0, 8.0, 0.2],
+    [90.0, 14.0, 0.2],
+    [96.0, 26.0, 0.2],
+    [54.0, 34.0, 0.2],
+    [70.0, 42.0, 0.2],
+    [88.0, 36.0, 0.2],
+    [96.0, 50.0, 0.2],
+    [56.0, 62.0, 0.2],
+    [72.0, 58.0, 0.2],
+    [90.0, 66.0, 0.2],
+    [96.0, 76.0, 0.2],
+    [54.0, 86.0, 0.2],
+    [70.0, 92.0, 0.2],
+    [86.0, 88.0, 0.2],
+    [96.0, 96.0, 0.2]
+  ],
+  "obstacle_xy": [
+    [44.0, 18.0],
+    [42.0, 55.0],
+    [60.0, 70.0],
+    [78.0, 30.0],
+    [80.0, 64.0]
+  ]
+}

@@ -1,11 +1,13 @@
 import numpy as np
 
+import test_waypoint_task_scenarios_common as scenario_common
 from test_waypoint_task_scenarios_common import (
+    attach_collaborative_slot_targets,
     build_base_parser,
     build_tasks_from_specs,
     call_assignment_provider,
     finalize_args,
-    normalize_unique_task_queues,
+    normalize_agent_queues,
     remove_task_ids_from_queues,
     refresh_agent_targets,
     resolve_agent_queues_from_provider_payload,
@@ -105,13 +107,19 @@ def build_state(env, args, assignment_override, scenario_payload=None):
     task_specs = plan["task_specs"]
     task_points = task_points[: len(task_specs)]
     tasks = build_tasks_from_specs(task_points, task_specs)
-    agent_queues = normalize_unique_task_queues(agent_names, plan["agent_queues"])
+    agent_queues = normalize_agent_queues(agent_names, plan["agent_queues"])
     sync_task_assignments_from_queues(
         {
             "tasks": tasks,
             "agent_queues": agent_queues,
         },
         agent_names=agent_names,
+    )
+    attach_collaborative_slot_targets(
+        env,
+        tasks,
+        args=args,
+        scenario_payload=scenario_payload,
     )
 
     lost_agents = assignment_override.get("lost_agents")
@@ -258,6 +266,7 @@ def _resolve_external_replan_queues(step, env, state, event_type, event_payload)
         env.possible_agents,
         provider_payload,
         allowed_task_ids=_active_task_ids(state),
+        preserve_collaborative_tasks=True,
     )
     if resolved_queues is None:
         return None
@@ -266,7 +275,7 @@ def _resolve_external_replan_queues(step, env, state, event_type, event_payload)
     for agent in env.possible_agents:
         if str(agent) in inactive_agents:
             resolved_queues[str(agent)] = []
-    return normalize_unique_task_queues(env.possible_agents, resolved_queues)
+    return normalize_agent_queues(env.possible_agents, resolved_queues)
 
 
 def on_post_step(step, env, state):
@@ -303,8 +312,14 @@ def on_post_step(step, env, state):
     else:
         raise ValueError("assignment_provider 未返回无人机损失后的重分配方案，已禁用贪心/手动兜底分配。")
 
-    state["agent_queues"] = normalize_unique_task_queues(env.possible_agents, state["agent_queues"])
+    state["agent_queues"] = normalize_agent_queues(env.possible_agents, state["agent_queues"])
     sync_task_assignments_from_queues(state, agent_names=env.possible_agents)
+    attach_collaborative_slot_targets(
+        env,
+        state["tasks"],
+        args=state.get("_args"),
+        scenario_payload=state.get("_scenario_payload"),
+    )
     unassigned_after_replan = _dedupe_task_ids(
         _collect_unassigned_tasks_after_loss(state, state["inactive_agents"])
     )
@@ -313,7 +328,7 @@ def on_post_step(step, env, state):
             "assignment_provider 未覆盖无人机损失后的剩余任务: "
             + ", ".join(unassigned_after_replan)
         )
-    state["agent_queues"] = normalize_unique_task_queues(env.possible_agents, state["agent_queues"])
+    state["agent_queues"] = normalize_agent_queues(env.possible_agents, state["agent_queues"])
     sync_task_assignments_from_queues(state, agent_names=env.possible_agents)
     refresh_agent_targets(env, state)
     state["event_log"].append({
@@ -343,6 +358,7 @@ def main():
         help="发生损失的无人机列表，逗号分隔",
     )
     args = finalize_args(parser)
+    scenario_common.promote_completed_tasks = scenario_common.promote_collaborative_completed_tasks
     run_task_scenario(
         args,
         "agent_loss",

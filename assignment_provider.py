@@ -54,7 +54,7 @@ warnings.filterwarnings('ignore')
 # 2. 可修改的默认配置区（根据实际场景调整）
 # ============================================================
 DEFAULT_MODEL_PATH = "best_model_checkpoint.pth"
-DEFAULT_SCENARIO_PATH = "scenario_test_cluster.json"
+DEFAULT_SCENARIO_PATH = "../scenario_A_collaborate.json"
 
 # 平台类型分配规则（10平台示例；如平台数变化会自动循环）
 DEFAULT_PLATFORM_TYPES = ['侦察', '侦察', '侦察',
@@ -727,21 +727,81 @@ def plan_assignments(
 
 
     # ------------------------------------------------------------------
-    # 5.1 获取场景数据
+    # 5.1 获取场景数据（三种来源，按优先级：外部payload > 外部位置 > 本地文件）
     # ------------------------------------------------------------------
-    if scenario_payload is None:
-        # 若接口未传入，尝试从 args 或默认路径读取
+    platform_configs = []   # 平台设置，平台属性从这里读取
+    target_configs = []     # 目标设置，任务属性从这里读取
+    default_agent_names = []
+    default_task_ids = []
+
+    # 优先级1：外部直接传入完整的 scenario_payload（JSON 解析后的字典）
+    if scenario_payload is not None and isinstance(scenario_payload, dict) and scenario_payload:
+        platform_configs, target_configs, default_agent_names, default_task_ids = _parse_scenario(scenario_payload)
+
+    # 优先级2：外部传入平台/目标位置（师兄主流程标准方式，完全不依赖文件）
+    elif available_agent_positions is not None and pending_task_positions is not None:
+        # 平台：以 agent_names（如果传入）或 available_agent_positions 的 keys 为准
+        names_to_use = agent_names if agent_names else list(available_agent_positions.keys())
+        for i, name in enumerate(names_to_use):
+            pos = available_agent_positions.get(name, [50.0, 50.0, 3.0])
+            ptype = DEFAULT_PLATFORM_TYPES[i % len(DEFAULT_PLATFORM_TYPES)]
+            platform_configs.append({
+                'type': ptype,
+                'payload': None,
+                'max_range': None,
+                'speed': None,
+                'pos': _norm_position(pos)
+            })
+        default_agent_names = names_to_use
+
+        # 目标：以 task_count（如果传入）或 pending_task_positions 长度为准
+        task_ids_from_pos = list(pending_task_positions.keys())
+        n_targets_actual = int(task_count) if task_count else len(task_ids_from_pos)
+        for i in range(n_targets_actual):
+            if i < len(task_ids_from_pos):
+                task_id = task_ids_from_pos[i]
+                pos = pending_task_positions[task_id]
+            else:
+                # task_count 大于实际传入位置数时，补充默认位置
+                task_id = f"task_{i+1:02d}"
+                pos = [50.0, 50.0, 0.0]
+
+            ttype = DEFAULT_TARGET_TYPES[i % len(DEFAULT_TARGET_TYPES)]
+            if ttype == '侦察':
+                tw_start, tw_end = 0, 1000
+                req_payload = 1
+                value = 0.5 + (i % 6) * 0.08
+            else:  # 察打一体
+                tw_start = 100 + (i % 10) * 50
+                tw_end = tw_start + 700
+                req_payload = 2
+                value = 0.8 + (i % 10) * 0.04
+
+            target_configs.append({
+                'type': ttype,
+                'value': round(value, 2),
+                'pos': _norm_position(pos),
+                'req_payload': req_payload,
+                'time_win_start': tw_start,
+                'time_win_end': tw_end,
+                'predecessors': []
+            })
+        default_task_ids = [f"task_{i+1:02d}" for i in range(n_targets_actual)]
+
+    # 优先级3：从默认/指定文件读取（独立运行或测试模式）
+    else:
         scenario_path = getattr(args, 'scenario_path', DEFAULT_SCENARIO_PATH) if args else DEFAULT_SCENARIO_PATH
         if os.path.exists(scenario_path):
             with open(scenario_path, 'r', encoding='utf-8') as f:
                 scenario_payload = json.load(f)
+            platform_configs, target_configs, default_agent_names, default_task_ids = _parse_scenario(scenario_payload)
         else:
-            scenario_payload = {}
-
-    # ------------------------------------------------------------------
-    # 5.2 解析为平台/目标配置
-    # ------------------------------------------------------------------
-    platform_configs, target_configs, default_agent_names, default_task_ids = _parse_scenario(scenario_payload)
+            print(f"❌ 错误: 未收到外部场景数据，且默认场景文件 {scenario_path} 不存在")
+            print("   可能原因：")
+            print("   1. 师兄主流程未传入 available_agent_positions / pending_task_positions")
+            print("   2. 独立运行时未提供 --scenario 参数或场景文件缺失")
+            print("   解决：确保从主流程传入平台/目标位置，或提供有效的场景文件。")
+            return None
 
     # 如果路径规划端传入了 agent_names / task_count，以传入为准
     if agent_names:
@@ -990,10 +1050,13 @@ def assignment_provider(agent_names, task_count, assignment_override=None, **pro
     available_agent_positions = provider_context.get('available_agent_positions')
     pending_task_positions = provider_context.get('pending_task_positions')
     scenario_payload = provider_context.get('scenario_payload')  # ← 新增：支持外部直接传入
-    # 2. 如果 plan_assignments 内部读不到场景，尝试根据 scenario_name 自动加载
-    if scenario_payload is None and scenario_name:
+    # 2. 只有当完全没有外部数据且指定了场景名时，才尝试读文件（向后兼容测试）
+    if (scenario_payload is None and
+        available_agent_positions is None and
+        pending_task_positions is None and
+        scenario_name):
         candidate_paths = [
-            f"{scenario_name}_collaborate.json",  # 例如 scenario_test_cluster.json
+            f"{scenario_name}_collaborate.json",  # 例如 scenario_A_collaborate.json
             f"{scenario_name}.json",              # 例如 scenario_A.json
             DEFAULT_SCENARIO_PATH,                # 兜底
         ]

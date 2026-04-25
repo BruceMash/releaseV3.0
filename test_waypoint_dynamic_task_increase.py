@@ -1,6 +1,8 @@
 import numpy as np
 
+import test_waypoint_task_scenarios_common as scenario_common
 from test_waypoint_task_scenarios_common import (
+    attach_collaborative_slot_targets,
     apply_active_agent_queue_mask,
     build_base_parser,
     build_tasks_from_specs,
@@ -9,7 +11,7 @@ from test_waypoint_task_scenarios_common import (
     finalize_args,
     format_sim_time,
     merge_agent_queues,
-    normalize_unique_task_queues,
+    normalize_agent_queues,
     print_agent_task_sequences,
     remove_task_ids_from_queues,
     resolve_agent_queues_from_provider_payload,
@@ -132,7 +134,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
         )
     else:
         agent_queues = filter_agent_queues(agent_names, plan["agent_queues"], initial_task_ids)
-    agent_queues = normalize_unique_task_queues(agent_names, agent_queues)
+    agent_queues = normalize_agent_queues(agent_names, agent_queues)
 
     has_explicit_injected_agent_queues = False
     if provider_payload.get("injected_agent_queues") is not None:
@@ -143,9 +145,9 @@ def build_state(env, args, assignment_override, scenario_payload=None):
         )
     else:
         injected_agent_queues = filter_agent_queues(agent_names, plan["agent_queues"], injected_task_ids)
-    injected_agent_queues = normalize_unique_task_queues(agent_names, injected_agent_queues)
+    injected_agent_queues = normalize_agent_queues(agent_names, injected_agent_queues)
 
-    projected_agent_queues = normalize_unique_task_queues(
+    projected_agent_queues = normalize_agent_queues(
         agent_names,
         merge_agent_queues(agent_names, agent_queues, injected_agent_queues),
     )
@@ -154,6 +156,12 @@ def build_state(env, args, assignment_override, scenario_payload=None):
         "agent_queues": projected_agent_queues,
     }
     sync_task_assignments_from_queues(preview_state, agent_names=agent_names)
+    attach_collaborative_slot_targets(
+        env,
+        tasks,
+        args=args,
+        scenario_payload=scenario_payload,
+    )
 
     trigger_step = int(
         assignment_override.get(
@@ -254,6 +262,7 @@ def _resolve_external_replan_queues(step, env, state):
         env.possible_agents,
         provider_payload,
         allowed_task_ids=_active_task_ids(state),
+        preserve_collaborative_tasks=True,
     )
 
 
@@ -276,9 +285,15 @@ def on_post_step(step, env, state):
             "assignment_provider 未返回任务突增后的重分配方案，已禁用手动 injected_agent_queues 兜底。"
         )
 
-    state["agent_queues"] = normalize_unique_task_queues(env.possible_agents, state["agent_queues"])
+    state["agent_queues"] = normalize_agent_queues(env.possible_agents, state["agent_queues"])
     apply_active_agent_queue_mask(env.possible_agents, state)
     sync_task_assignments_from_queues(state, agent_names=env.possible_agents)
+    attach_collaborative_slot_targets(
+        env,
+        state["tasks"],
+        args=state.get("_args"),
+        scenario_payload=state.get("_scenario_payload"),
+    )
     unassigned_injected_task_ids = [
         str(task_id)
         for task_id in state["injected_task_ids"]
@@ -326,6 +341,7 @@ def main():
     parser.add_argument("--initial_task_count", type=int, default=10, help="初始激活的任务数")
     parser.add_argument("--task_increase_step", type=int, default=300, help="新增任务的触发步数")
     args = finalize_args(parser)
+    scenario_common.promote_completed_tasks = scenario_common.promote_collaborative_completed_tasks
     run_task_scenario(
         args,
         "dynamic_task_increase",

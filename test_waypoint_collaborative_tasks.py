@@ -422,7 +422,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
     task_specs = plan["task_specs"]
     task_points = task_points[: len(task_specs)]
     tasks = build_tasks_from_specs(task_points, task_specs)
-    _attach_collaborative_slot_targets(
+    scenario_common.attach_collaborative_slot_targets(
         env,
         tasks,
         args=args,
@@ -460,7 +460,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
 def main():
     parser = build_base_parser("协同任务场景测试")
     args = finalize_args(parser)
-    scenario_common.promote_completed_tasks = promote_collaborative_completed_tasks
+    scenario_common.promote_completed_tasks = scenario_common.promote_collaborative_completed_tasks
     run_task_scenario(args, "collaborative_tasks", build_state)
 
 

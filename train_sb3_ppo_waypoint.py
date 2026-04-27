@@ -1267,17 +1267,18 @@ def _draw_task_status_panels(ax2d, render_meta):
         lines = ["UAV task queues"]
         lines.extend(str(row.get("text", "")) for row in rows[:10] if isinstance(row, dict))
         ax2d.text(
-            1.04,
+            1.06,
             0.98,
             "\n".join(lines),
             transform=ax2d.transAxes,
-            fontsize=7,
+            fontsize=8.5,
             color="black",
             ha="left",
             va="top",
             clip_on=False,
             zorder=100,
-            bbox={"boxstyle": "round,pad=0.35", "facecolor": "white", "alpha": 0.82, "edgecolor": "0.75"},
+            linespacing=1.24,
+            bbox={"boxstyle": "round,pad=0.48", "facecolor": "white", "alpha": 0.84, "edgecolor": "0.75"},
         )
 
     reassignment = render_meta.get("reassignment_panel")
@@ -1297,17 +1298,18 @@ def _draw_task_status_panels(ax2d, render_meta):
             after_text = _format_queue_for_panel(after.get(agent, []), max_items=3)
             lines.append(f"{agent}: {before_text} => {after_text}")
         ax2d.text(
-            1.04,
-            0.52,
+            1.06,
+            0.56,
             "\n".join(lines),
             transform=ax2d.transAxes,
-            fontsize=6.5,
+            fontsize=8.0,
             color="darkslategray",
             ha="left",
             va="top",
             clip_on=False,
             zorder=100,
-            bbox={"boxstyle": "round,pad=0.35", "facecolor": "aliceblue", "alpha": 0.82, "edgecolor": "0.7"},
+            linespacing=1.22,
+            bbox={"boxstyle": "round,pad=0.48", "facecolor": "aliceblue", "alpha": 0.84, "edgecolor": "0.7"},
         )
 
 
@@ -2371,10 +2373,10 @@ def evaluate(args):
             obs, infos = restored_obs, restored_infos
 
     plt.ion()
-    fig = plt.figure(figsize=(20, 8))
+    fig = plt.figure(figsize=(24, 10))
     ax3d = fig.add_subplot(121, projection="3d")
     ax2d = fig.add_subplot(122)
-    fig.subplots_adjust(right=0.78, wspace=0.18)
+    fig.subplots_adjust(right=0.72, wspace=0.16)
     ax3d.view_init(elev=30, azim=45)
     eval_artifact_dir = os.path.join(model_dir, "eval_artifacts")
     eval_run_name = datetime.datetime.now().strftime("eval_%Y%m%d_%H%M%S")
@@ -2725,10 +2727,10 @@ def evaluate(args):
             break
 
     print("开始回放渲染 waypoint 策略表现...")
-    fig = plt.figure(figsize=(20, 8))
+    fig = plt.figure(figsize=(24, 10))
     ax3d = fig.add_subplot(121, projection="3d")
     ax2d = fig.add_subplot(122)
-    fig.subplots_adjust(right=0.78, wspace=0.18)
+    fig.subplots_adjust(right=0.72, wspace=0.16)
     ax3d.view_init(elev=30, azim=45)
     if render_mode_enabled:
         plt.ion()
@@ -2944,12 +2946,7 @@ if __name__ == "__main__":
     parser.add_argument("--timeout_penalty_scale", type=float, default=10, help="超时惩罚系数")
     
     parser.add_argument("--collision_radius", type=float, default=0.02, help="机间碰撞半径")
-    parser.add_argument(
-        "--near_goal_collision_free_radius",
-        type=float,
-        default=1.0,
-        help="双方都在各自目标点附近时豁免机间碰撞的半径",
-    )
+ 
     parser.add_argument(
         "--hemisphere_exclusion_buffer",
         type=float,

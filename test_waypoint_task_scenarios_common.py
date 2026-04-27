@@ -3305,10 +3305,11 @@ def build_base_parser(description): # 构建参数parser
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--config_json", type=str, default="")
-    parser.add_argument("--model_root", type=str, default=DEFAULT_MODEL_ROOT)
-    parser.add_argument("--run_id", type=str, default="")
-    parser.add_argument("--eval_model_path", type=str, default="")
-    parser.add_argument("--use_global_planner", type=_parse_bool, default=False)
+    parser.add_argument("--model_root", type=str, default=DEFAULT_MODEL_ROOT)   # 下层网咯根目录
+    parser.add_argument("--run_id", type=str, default="")   # 指定对应训练id的模型
+    parser.add_argument("--eval_model_path", type=str, default="")  # 验证模型路径
+
+    parser.add_argument("--use_global_planner", type=_parse_bool, default=True)    
     parser.add_argument("--global_planner_model_root", type=str, default=DEFAULT_GLOBAL_PLANNER_MODEL_ROOT)
     parser.add_argument("--global_planner_run_id", type=str, default="")
     parser.add_argument("--global_planner_model_path", type=str, default="")
@@ -3336,14 +3337,20 @@ def build_base_parser(description): # 构建参数parser
     parser.add_argument("--n_agents", type=int, default=10)
     parser.add_argument("--active_n_agents", type=int, default=0)
     parser.add_argument("--task_count", type=int, default=16)
-    parser.add_argument("--max_steps", type=int, default=4000)
+    parser.add_argument("--max_steps", type=int, default=6000)
     parser.add_argument("--assignment_json", type=str, default="")
     parser.add_argument("--scenario_json", type=str, default="")
+
+    # 场景大小（笛卡尔）
     parser.add_argument("--space_x", type=float, default=100.0)
     parser.add_argument("--space_y", type=float, default=100.0)
     parser.add_argument("--space_z", type=float, default=15.0)
+
+    # 初始经纬高
     parser.add_argument("--origin_lat", type=float, default=31.95)
     parser.add_argument("--origin_lon", type=float, default=118.85)
+
+    # 地形文件导入相关
     parser.add_argument("--terrain_enabled", type=_parse_bool, default=True)
     parser.add_argument("--terrain_source", type=str, default="csv")
     parser.add_argument("--terrain_csv_path", type=str, default=DEFAULT_TERRAIN_CSV)
@@ -3356,6 +3363,8 @@ def build_base_parser(description): # 构建参数parser
     parser.add_argument("--terrain_max_clearance", type=float, default=1.0)
     parser.add_argument("--terrain_match_space_dim", type=_parse_bool, default=True)
     parser.add_argument("--terrain_spawn_clearance", type=float, default=0.1)
+
+
     parser.add_argument("--global_waypoint_switch_threshold", type=float, default=1.5)
     parser.add_argument("--global_waypoint_relaxed_threshold", type=float, default=1.8)
     parser.add_argument("--global_waypoint_stagnation_steps", type=int, default=10)
@@ -3378,6 +3387,7 @@ def build_base_parser(description): # 构建参数parser
     parser.add_argument("--terrain_radius_max", type=float, default=10.0)
     parser.add_argument("--terrain_height_min", type=float, default=5.0)
     parser.add_argument("--terrain_height_max", type=float, default=10.0)
+
     parser.add_argument("--lowland_height_threshold", type=float, default=10.0)
     parser.add_argument("--lowland_cylinder_radius_min", type=float, default=5.0)
     parser.add_argument("--lowland_cylinder_radius_max", type=float, default=10.0)
@@ -3392,6 +3402,8 @@ def build_base_parser(description): # 构建参数parser
     parser.add_argument("--lidar_range", type=float, default=0.6)
     parser.add_argument("--goal_threshold", type=float, default=1.0)
     parser.add_argument("--collab_slot_obstacle_buffer", type=float, default=2.0)
+
+    # 奖励相关
     parser.add_argument("--step_penalty", type=float, default=-0.01)
     parser.add_argument("--progress_reward_scale", type=float, default=2.0)
     parser.add_argument("--obstacle_collision_penalty", type=float, default=80.0)
@@ -3399,7 +3411,8 @@ def build_base_parser(description): # 构建参数parser
     parser.add_argument("--goal_reward", type=float, default=1500.0)
     parser.add_argument("--timeout_penalty_scale", type=float, default=40.0)
     parser.add_argument("--collision_radius", type=float, default=0.02)
-    parser.add_argument("--near_goal_collision_free_radius", type=float, default=1.0)
+
+    # 场景相关
     parser.add_argument("--hemisphere_exclusion_buffer", type=float, default=5.0)
     parser.add_argument("--avoid_mountain_basins", type=_parse_bool, default=True)
     parser.add_argument("--basin_window_radius", type=int, default=4)
@@ -3758,10 +3771,10 @@ def run_task_scenario(args, scenario_name, build_state_fn, on_post_step=None, is
             plt.ion()
         else:
             plt.ioff()
-        fig = plt.figure(figsize=(20, 8))
+        fig = plt.figure(figsize=(24, 10))
         ax_3d = fig.add_subplot(121, projection="3d")
         ax_top = fig.add_subplot(122)
-        fig.subplots_adjust(right=0.78, wspace=0.18)
+        fig.subplots_adjust(right=0.72, wspace=0.16)
 
         replay_history = None
         for idx, snapshot in enumerate(render_snapshots):

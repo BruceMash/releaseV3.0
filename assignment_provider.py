@@ -35,14 +35,14 @@ from matplotlib.lines import Line2D
 # 1. 导入主程序模块（确保 bibi.py 与本文件在同目录）
 # ============================================================
 try:
-    from bibi import (
+    from backups.bibi import (
         Config, TerrainEnv, TaskSystem, Platform, Target, Threat,
         TerrainTrainer, DynamicReallocator, ConvergenceMonitor,
         GATEncoder, Actor, Critic, MASAC, RouteEstimator, RoutePlanner
     )
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from bibi import (
+    from backups.bibi import (
         Config, TerrainEnv, TaskSystem, Platform, Target, Threat,  # ← 补上 Threat
         TerrainTrainer, DynamicReallocator, ConvergenceMonitor,
         GATEncoder, Actor, Critic, MASAC, RouteEstimator, RoutePlanner

@@ -1828,6 +1828,7 @@ def _plot_waypoint_env(
         task_position = np.asarray(task.get("position", []), dtype=np.float32)
         if task_position.shape[0] < 3:
             continue
+        task_name = str(task.get("label") or task.get("task_id") or "task")
         task_completed = bool(task.get("completed", False))
         task_color = "seagreen" if task_completed else "dimgray"
         task_marker = "X" if task_completed else "P"
@@ -1883,7 +1884,7 @@ def _plot_waypoint_env(
             task_position[0],
             task_position[1],
             task_position[2] + 0.35,
-            task_badge["text"],
+            f"{task_badge['text']} {task_name}",
             color=task_badge["color"],
             fontsize=7.5,
             fontweight="bold",
@@ -1895,6 +1896,22 @@ def _plot_waypoint_env(
                 "edgecolor": task_badge["color"],
                 "alpha": 0.88,
                 "linewidth": 0.8,
+            },
+        )
+        ax2d.text(
+            task_position[0] + 1.2,
+            task_position[1] - 1.35,
+            task_name,
+            color=task_badge["color"],
+            fontsize=7.2,
+            ha="left",
+            va="top",
+            zorder=13,
+            bbox={
+                "boxstyle": "round,pad=0.15",
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.72,
             },
         )
 
@@ -1922,6 +1939,7 @@ def _plot_waypoint_env(
             for point in global_routes.get(agent, [])
         ]
         agent_badge = _resolve_type_badge(agent_types.get(agent, ""), _AGENT_TYPE_SYMBOLS, "○")
+        agent_name = str(agent)
 
         marker = "X" if is_collided else ("^" if is_done else "o")
         alpha = 0.95 if (is_active or is_done) else 0.45
@@ -2114,7 +2132,7 @@ def _plot_waypoint_env(
             position[0],
             position[1],
             position[2] + 0.45,
-            f"{agent_badge['symbol']}{agent_badge['short_label']}",
+            f"{agent_badge['symbol']}{agent_badge['short_label']} {agent_name}",
             color=agent_badge["color"],
             fontsize=8.0,
             fontweight="bold",
@@ -2126,6 +2144,22 @@ def _plot_waypoint_env(
                 "edgecolor": agent_badge["color"],
                 "alpha": 0.9,
                 "linewidth": 0.9,
+            },
+        )
+        ax2d.text(
+            position[0] + 1.35,
+            position[1] + 1.1,
+            agent_name,
+            color=agent_badge["color"],
+            fontsize=7.4,
+            ha="left",
+            va="bottom",
+            zorder=15,
+            bbox={
+                "boxstyle": "round,pad=0.15",
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.75,
             },
         )
         ax2d.scatter(target[0], target[1], color=color, marker="*", s=120, alpha=0.9)

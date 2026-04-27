@@ -64,7 +64,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
         count=args.task_count,
     )
     provider_task_positions = {
-        f"task_{idx + 1:02d}": np.asarray(point, dtype=np.float32)
+        f"task_{idx + 1:02d}": np.asarray(point, dtype=np.float32).copy()
         for idx, point in enumerate(task_points)
     }
     plan = resolve_assignment_plan(
@@ -96,8 +96,7 @@ def build_state(env, args, assignment_override, scenario_payload=None):
     ):
         raise ValueError("assignment_provider 未返回有效分配方案，dynamic_task_increase 不再使用默认/固定分配策略。")
     task_specs = plan["task_specs"]
-    task_points = task_points[: len(task_specs)]
-    tasks = build_tasks_from_specs(task_points, task_specs)
+    tasks = build_tasks_from_specs(provider_task_positions, task_specs)
 
     all_task_ids = list(tasks.keys())
     initial_count = max(

@@ -35,15 +35,15 @@ from matplotlib.lines import Line2D
 # 1. 导入主程序模块（确保 bibi.py 与本文件在同目录）
 # ============================================================
 try:
-    from bibi import (
+    from backups.bibi import (
         Config, TerrainEnv, TaskSystem, Platform, Target, Threat,
         TerrainTrainer, DynamicReallocator, ConvergenceMonitor,
         GATEncoder, Actor, Critic, MASAC, RouteEstimator, RoutePlanner
     )
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from bibi import (
-        Config, TerrainEnv, TaskSystem, Platform, Target, Threat,  # ← 补上 Threat
+    from backups.bibi import (
+        Config, TerrainEnv, TaskSystem, Platform, Target,
         TerrainTrainer, DynamicReallocator, ConvergenceMonitor,
         GATEncoder, Actor, Critic, MASAC, RouteEstimator, RoutePlanner
     )
@@ -54,7 +54,7 @@ warnings.filterwarnings('ignore')
 # 2. 可修改的默认配置区（根据实际场景调整）
 # ============================================================
 DEFAULT_MODEL_PATH = "best_model_checkpoint.pth"
-DEFAULT_SCENARIO_PATH = "D:\PythonProject2\scenario_test_line.json"
+DEFAULT_SCENARIO_PATH = "../scenario_A_collaborate.json"
 
 # 平台类型分配规则（10平台示例；如平台数变化会自动循环）
 DEFAULT_PLATFORM_TYPES = ['侦察', '侦察', '侦察',
@@ -91,7 +91,6 @@ _global_state = {
     'last_n_platforms': 0, # 上次平台数（用于检测变化）
     'last_n_targets': 0,   # 上次目标数
     'last_assignment': None, # 上次分配结果（用于对比）
-    'all_agent_names': [], # 完整的原始平台列表（确保损失平台也在对比表中显示）
 }
 
 
@@ -99,66 +98,10 @@ _global_state = {
 # 4. 辅助函数：场景解析 / 模型加载 / 格式化 / 可视化
 # ============================================================
 
-def _assign_platform_types(n: int) -> List[str]:
-    """按百分比分配平台类型：30%%侦察, 20%%打击, 50%%察打一体（取整，总和=n）"""
-    if n <= 0:
-        return []
-    n_recon = round(n * 0.30)
-    n_strike = round(n * 0.20)
-    n_multi = n - n_recon - n_strike
-    while n_recon + n_strike + n_multi != n:
-        if n_recon + n_strike + n_multi < n:
-            n_multi += 1
-        else:
-            if n_strike > 0:
-                n_strike -= 1
-            elif n_recon > 0:
-                n_recon -= 1
-            else:
-                n_multi -= 1
-    return ['侦察'] * n_recon + ['打击'] * n_strike + ['察打一体'] * n_multi
-
-
-def _assign_target_types(n: int) -> List[str]:
-    """按百分比分配目标类型：40%%侦察, 60%%察打一体（取整，总和=n）"""
-    if n <= 0:
-        return []
-    n_recon = round(n * 0.40)
-    n_multi = n - n_recon
-    while n_recon + n_multi != n:
-        if n_recon + n_multi < n:
-            n_multi += 1
-        else:
-            if n_recon > 0:
-                n_recon -= 1
-            else:
-                n_multi -= 1
-    return ['侦察'] * n_recon + ['察打一体'] * n_multi
-
-
-def _get_platform_type_by_index(idx: int, total: int) -> str:
-    """根据平台在原始场景中的固定索引返回类型，保持与 _assign_platform_types 一致"""
-    types = _assign_platform_types(total)
-    if 0 <= idx < len(types):
-        return types[idx]
-    return '察打一体'
-
-
-def _get_target_type_by_index(idx: int, total: int) -> str:
-    """根据目标在原始场景中的固定索引返回类型，保持与 _assign_target_types 一致"""
-    types = _assign_target_types(total)
-    if 0 <= idx < len(types):
-        return types[idx]
-    return '察打一体'
-
-
 def _parse_scenario(scenario_payload: dict) -> Tuple[List[dict], List[dict], list, list]:
     """
     从 scenario_A.json 结构解析为 bibi.py 需要的 platform_configs / target_configs。
     同时返回 agent_names 列表和 task_ids 列表。
-    平台/目标类型按百分比动态分配：
-      - 平台：30%%侦察, 20%%打击, 50%%察打一体
-      - 目标：40%%侦察, 60%%察打一体
     """
     start_positions = scenario_payload.get('start_positions', [])
     task_positions = scenario_payload.get('task_positions', [])
@@ -166,26 +109,15 @@ def _parse_scenario(scenario_payload: dict) -> Tuple[List[dict], List[dict], lis
     n_platforms = len(start_positions)
     n_targets = len(task_positions)
 
-    platform_type_list = scenario_payload.get('platform_types', _assign_platform_types(n_platforms))
-    if len(platform_type_list) != n_platforms:
-        platform_type_list = _assign_platform_types(n_platforms)
-
-    target_type_list = scenario_payload.get('target_types', _assign_target_types(n_targets))
-    if len(target_type_list) != n_targets:
-        target_type_list = _assign_target_types(n_targets)
-
     # 构建平台配置
     platform_configs = []
     for i, pos in enumerate(start_positions):
-        ptype = platform_type_list[i]
-        max_range = None
-        if 'platform_max_ranges' in scenario_payload and i < len(scenario_payload['platform_max_ranges']):
-            max_range = float(scenario_payload['platform_max_ranges'][i]) * COORD_SCALE
-
+        ptype = DEFAULT_PLATFORM_TYPES[i % len(DEFAULT_PLATFORM_TYPES)]
         platform_configs.append({
             'type': ptype,
-            'payload': None,
-            'max_range': max_range,
+            'payload': None,          # 使用 Platform 默认值
+            'max_range': None,        # 使用 Platform 默认值
+            'speed': None,            # 使用 Platform 默认值
             'pos': [pos[0] * COORD_SCALE,
                     pos[1] * COORD_SCALE,
                     pos[2] * COORD_SCALE]
@@ -193,21 +125,18 @@ def _parse_scenario(scenario_payload: dict) -> Tuple[List[dict], List[dict], lis
 
     # 构建目标配置
     target_configs = []
-    recon_count = 0
-    multi_count = 0
     for i, pos in enumerate(task_positions):
-        ttype = target_type_list[i]
+        ttype = DEFAULT_TARGET_TYPES[i % len(DEFAULT_TARGET_TYPES)]
+        # 时间窗口：侦察任务不设严格窗口；打击/察打一体设置合理窗口
         if ttype == '侦察':
             tw_start, tw_end = 0, 1000
             req_payload = 1
-            value = 0.5 + recon_count * 0.08
-            recon_count += 1
+            value = 0.5 + (i % 6) * 0.08
         else:  # 察打一体
-            tw_start = 100 + multi_count * 50
+            tw_start = 100 + (i % 10) * 50
             tw_end = tw_start + 700
             req_payload = 2
-            value = 0.8 + multi_count * 0.04
-            multi_count += 1
+            value = 0.8 + (i % 10) * 0.04
 
         target_configs.append({
             'type': ttype,
@@ -218,74 +147,54 @@ def _parse_scenario(scenario_payload: dict) -> Tuple[List[dict], List[dict], lis
             'req_payload': req_payload,
             'time_win_start': tw_start,
             'time_win_end': tw_end,
-            'predecessors': []
+            'predecessors': []  # bibi.py 的 setup_scenario 会自动建立打击→侦察前序
         })
 
     agent_names = [f"agent_{i}" for i in range(n_platforms)]
     task_ids = [f"task_{i + 1:02d}" for i in range(n_targets)]
 
-    # 解析障碍物（字段名 obstacle_xy，单位 km → m）
-    obstacle_xy = scenario_payload.get('obstacle_xy', [])
-    obstacles = []
-    for obs in obstacle_xy:
-        if len(obs) >= 2:
-            obstacles.append([float(obs[0]) * COORD_SCALE,
-                              float(obs[1]) * COORD_SCALE])
-    # 如果有第3个元素作为半径，也一并转换
-    for i, obs in enumerate(obstacle_xy):
-        if len(obs) >= 3 and i < len(obstacles):
-            obstacles[i].append(float(obs[2]) * COORD_SCALE)
-
-    return platform_configs, target_configs, agent_names, task_ids, obstacles
+    return platform_configs, target_configs, agent_names, task_ids
 
 
 def _load_model(system: TaskSystem, model_path: str = DEFAULT_MODEL_PATH) -> bool:
-    """加载训练好的最优模型到 system（自动跳过维度不匹配的层）"""
+    """加载训练好的最优模型到 system"""
     if not os.path.exists(model_path):
         print(f"⚠️  警告: 模型文件 {model_path} 不存在，将使用未训练模型（随机分配）")
         return False
 
     checkpoint = torch.load(model_path, map_location=system.masac.device, weights_only=False)
+    system.encoder.load_state_dict(checkpoint['encoder'])
+    system.masac.actor.load_state_dict(checkpoint['actor'])
 
-    # 依次尝试加载各组件，维度不匹配时跳过，保证程序不崩溃
-    try:
-        system.encoder.load_state_dict(checkpoint['encoder'])
-    except RuntimeError as e:
-        print(f"⚠️  Encoder 维度不匹配，跳过加载: {e}")
-
-    try:
-        system.masac.actor.load_state_dict(checkpoint['actor'])
-    except RuntimeError as e:
-        print(f"⚠️  Actor 维度不匹配（平台/目标数与训练时不同），跳过加载: {e}")
-
+    # Critic 在推理时非必需，但尽量加载
     if 'critic' in checkpoint:
         try:
             system.masac.critic.load_state_dict(checkpoint['critic'])
-        except RuntimeError as e:
-            print(f"⚠️  Critic 维度不匹配，跳过加载: {e}")
+        except RuntimeError:
+            pass  # 维度不匹配时忽略
 
-    print(f"✅ 已处理最优模型: {model_path}（部分权重可能因尺寸变化未加载）")
+    print(f"✅ 已加载最优模型: {model_path}")
     return True
 
-def _format_agent_queues(assignment: Dict[str, List[int]],
+
+def _format_agent_queues(assignment: Dict[int, List[int]],
                          agent_names: List[str],
                          task_ids: List[str]) -> Dict[str, List[str]]:
-    """将内部 {agent_name: [target_id, ...]} 转为路径规划端要求的 agent_queues 格式"""
+    """将内部 {platform_id: [target_id, ...]} 转为路径规划端要求的 agent_queues 格式"""
     agent_queues = {agent: [] for agent in agent_names}
-    for agent_name, tids in assignment.items():
+    for pid, tids in assignment.items():
+        agent_name = agent_names[pid] if pid < len(agent_names) else f"agent_{pid}"
         for tid in tids:
             task_name = task_ids[tid] if tid < len(task_ids) else f"task_{tid + 1:02d}"
             agent_queues.setdefault(agent_name, []).append(task_name)
     return agent_queues
 
 
-def _format_assignment_text(geo_assignment: Dict[str, List[int]],
+def _format_assignment_text(geo_assignment: Dict[int, List[int]],
                             env: TerrainEnv,
-                            elapsed_ms: float = 0.0,
-                            task_ids: List[str] = None,
-                            agent_names: List[str] = None) -> str:
+                            elapsed_ms: float = 0.0) -> str:
     """
-    生成精简文本输出（基于地理目标）：
+    生成精简文本输出（基于地理目标，只显示 task_01 ~ task_16）：
       - 每平台仅输出一行任务序列
       - 末尾汇总航程代价、时间代价、任务收益
     """
@@ -299,24 +208,14 @@ def _format_assignment_text(geo_assignment: Dict[str, List[int]],
     total_value = 0.0         # 任务收益
     assigned_geo_targets = set()
 
-    # 构建 agent_name -> 平台对象 的映射（应对损失后环境PID错位）
-    name_to_platform = {}
-    if agent_names:
-        for i, plat in enumerate(env.platforms):
-            if i < len(agent_names):
-                name_to_platform[agent_names[i]] = plat
-
-    for agent_name, geo_tids in sorted(geo_assignment.items()):
-        p = name_to_platform.get(agent_name)
-        if p is None:
+    for pid, geo_tids in sorted(geo_assignment.items()):
+        if pid >= len(env.platforms):
             continue
+        p = env.platforms[pid]
 
-        # 使用传入的 task_ids 列表映射地理目标索引到原始 task_id
-        if task_ids:
-            task_names = [task_ids[tid] if tid < len(task_ids) else f"task_{tid + 1:02d}" for tid in geo_tids]
-        else:
-            task_names = [f"task_{tid + 1:02d}" for tid in geo_tids]
-        lines.append(f"{agent_name} -> {len(geo_tids)} 个任务: {task_names}")
+        # 地理目标编号统一为 task_01 ~ task_16
+        task_names = [f"task_{tid + 1:02d}" for tid in geo_tids]
+        lines.append(f"agent_{pid} -> {len(geo_tids)} 个任务: {task_names}")
 
         prev_pos = p.position.copy()
         platform_dist = 0.0
@@ -357,10 +256,7 @@ def _format_assignment_text(geo_assignment: Dict[str, List[int]],
     lines.append(f"分配计算耗时: {elapsed_ms:.1f} ms")
 
     if unassigned:
-        if task_ids:
-            unassigned_names = [task_ids[t] if t < len(task_ids) else f"task_{t + 1:02d}" for t in unassigned]
-        else:
-            unassigned_names = [f"task_{t + 1:02d}" for t in unassigned]
+        unassigned_names = [f"task_{t + 1:02d}" for t in unassigned]
         lines.append(f"⚠️ 未完全覆盖！未分配目标: {unassigned_names}")
     else:
         lines.append(f"✅ 完全覆盖！所有 {len(env.geo_targets)} 个目标已分配")
@@ -372,9 +268,7 @@ def _format_assignment_text(geo_assignment: Dict[str, List[int]],
 def _save_3d_assignment(env: TerrainEnv,
                         assignment: Dict[int, List[int]],
                         filename: str = "assignment_3d.png",
-                        geo_assignment: Dict[str, List[int]] = None,
-                        agent_names: List[str] = None,
-                        obstacles: List[List[float]] = None):
+                        geo_assignment: Dict[int, List[int]] = None):
     """生成3D任务分配场景图（基于地理目标 task_01~task_16 显示）"""
 
     # ========== 字体与配色 ==========
@@ -411,13 +305,12 @@ def _save_3d_assignment(env: TerrainEnv,
                     gid = node_to_geo[nid]
                     if gid not in seen:
                         seen.append(gid)
-            agent_name = agent_names[pid] if agent_names and pid < len(agent_names) else f"agent_{pid}"
-            geo_assignment[agent_name] = seen
+            geo_assignment[pid] = seen
 
     # 计算地理目标层面的统计
     total_geo_tasks = sum(len(tids) for tids in geo_assignment.values())
     unique_geo_tasks = len(set(tid for tids in geo_assignment.values() for tid in tids))
-    n_platforms_assigned = len([name for name, tids in geo_assignment.items() if len(tids) > 0])
+    n_platforms_assigned = len([pid for pid, tids in geo_assignment.items() if len(tids) > 0])
 
     # 建立节点→地理目标映射（用于3D图和俯视图标注）
     node_to_geo = {}
@@ -460,47 +353,10 @@ def _save_3d_assignment(env: TerrainEnv,
                 np.zeros_like(theta), color='red', alpha=0.6,
                 linewidth=0.5, zorder=3)
 
-    # ---------- 2. 障碍物（来自 scenario 的 obstacle_xy）----------
-    obs_list = []
-    if obstacles:
-        for obs in obstacles:
-            if isinstance(obs, dict):
-                ox = float(obs.get('x', obs.get('center', [0, 0])[0]))
-                oy = float(obs.get('y', obs.get('center', [0, 0])[1]))
-                radius = float(obs.get('radius', obs.get('r', 3000.0)))
-                obs_list.append([ox, oy, radius])
-            elif isinstance(obs, (list, tuple, np.ndarray)):
-                arr = list(obs)
-                if len(arr) >= 2:
-                    ox, oy = float(arr[0]), float(arr[1])
-                    radius = float(arr[2]) if len(arr) >= 3 else 3000.0
-                    obs_list.append([ox, oy, radius])
-
-    if obs_list:
-        for obs in obs_list:
-            ox, oy, obs_radius = obs
-            obs_height = 10000.0  # 障碍物高度
-
-            z_obs = np.linspace(0, obs_height, 8)
-            theta_obs = np.linspace(0, 2 * np.pi, 16)
-            Z_obs, Theta_obs = np.meshgrid(z_obs, theta_obs)
-            X_obs = ox + obs_radius * np.cos(Theta_obs)
-            Y_obs = oy + obs_radius * np.sin(Theta_obs)
-            ax.plot_surface(X_obs, Y_obs, Z_obs, color='#7f8c8d', alpha=0.35,
-                            rstride=1, cstride=1, zorder=4, linewidth=0)
-
-            ax.plot(ox + obs_radius * np.cos(theta_obs),
-                    oy + obs_radius * np.sin(theta_obs),
-                    np.zeros_like(theta_obs), color='#7f8c8d', alpha=0.6,
-                    linewidth=1.5, zorder=4)
-    else:
-        print(f"[3D绘图] ⚠️ 未收到有效障碍物数据")
-
     # ---------- 3. 平台 ----------
     for p in env.platforms:
         c = CMAP.get(p.type, CMAP['侦察'])
-        agent_name = agent_names[p.id] if agent_names and p.id < len(agent_names) else f"agent_{p.id}"
-        n_tasks = len(geo_assignment.get(agent_name, []))
+        n_tasks = len(geo_assignment.get(p.id, []))  # ← 用地理目标数
         ax.scatter(*p.position, c=c['plat'], marker='o', s=500,
                    edgecolors='black', linewidth=2, alpha=0.95, zorder=10)
         ax.text(p.position[0], p.position[1], p.position[2] + 8000,
@@ -594,8 +450,6 @@ def _save_3d_assignment(env: TerrainEnv,
         Line2D([0], [0], color=CMAP['察打一体']['line'], lw=3, label='察打一体路径'),
         Line2D([0], [0], color='red', lw=0, marker='o', markersize=10,
                markerfacecolor='red', alpha=0.3, label='威胁区域'),
-        Line2D([0], [0], color='#7f8c8d', lw=0, marker='o', markersize=10,
-               markerfacecolor='#7f8c8d', alpha=0.4, label='障碍物'),
     ]
     ax.legend(handles=legend_elements, loc='upper left',
               bbox_to_anchor=(1.02, 1), fontsize=9)
@@ -612,20 +466,11 @@ def _save_3d_assignment(env: TerrainEnv,
     lines.append(f"{'平台':<8} {'类型':<6} {'任务链'}")
     lines.append("-" * 58)
 
-    # 构建 env_pid -> agent_name 映射，方便找平台对象
-    env_pid_to_name = {i: agent_names[i] for i in range(len(agent_names))} if agent_names else {}
-
-    for agent_name in sorted(geo_assignment.keys()):
-        # 找到该平台对应的环境对象
-        p = None
-        for plat in env.platforms:
-            if env_pid_to_name.get(plat.id) == agent_name:
-                p = plat
-                break
-        if p is None:
+    for pid in sorted(geo_assignment.keys()):
+        if pid >= len(env.platforms):
             continue
-
-        geo_tids = geo_assignment[agent_name]
+        p = env.platforms[pid]
+        geo_tids = geo_assignment[pid]
         if not geo_tids:
             continue
         task_chain = []
@@ -634,7 +479,8 @@ def _save_3d_assignment(env: TerrainEnv,
                 gt = env.geo_targets[geo_tid]
                 task_chain.append(f"task_{geo_tid + 1:02d}({gt['type']})")
         chain_str = " → ".join(task_chain)
-        lines.append(f"{agent_name:<10} {p.type:<6} {chain_str}")
+        # ❌ 删除截断逻辑，完整显示
+        lines.append(f"agent_{pid:<4} {p.type:<6} {chain_str}")
 
     lines.append("=" * 58)
     all_geo = set(range(len(env.geo_targets)))
@@ -646,7 +492,7 @@ def _save_3d_assignment(env: TerrainEnv,
         lines.append(f"\n✅ 全部 {len(env.geo_targets)} 个目标已分配")
 
     ax2.text(0.05, 0.98, "\n".join(lines), transform=ax2.transAxes,
-             fontsize=9, verticalalignment='top',
+             fontsize=9, verticalalignment='top',  # ← 字体从11改为9，容纳更长内容
              bbox=dict(boxstyle='round,pad=0.8', facecolor='#f8f9fa',
                        edgecolor='#2c3e50', linewidth=2, alpha=0.95))
     ax2.set_title("任务序列", fontsize=12, fontweight='bold', pad=10)
@@ -724,15 +570,6 @@ def _save_3d_assignment(env: TerrainEnv,
     ax3.set_title("俯视图（Z轴方向）", fontsize=12, fontweight='bold', pad=10)
     ax3.grid(True, alpha=0.3)
 
-    # 障碍物（俯视图）
-    if obs_list:
-        for obs in obs_list:
-            ox, oy, obs_radius = obs
-            circle_obs = plt.Circle((ox, oy), obs_radius, color='#7f8c8d', alpha=0.5, zorder=3)
-            ax3.add_patch(circle_obs)
-            ax3.annotate('障碍', (ox, oy), textcoords="offset points", xytext=(0, 0),
-                         ha='center', va='center', fontsize=7, color='white', fontweight='bold')
-
     # 俯视图简例
     top_legend = [
         Line2D([0], [0], marker='o', color='w', markerfacecolor=CMAP['侦察']['plat'],
@@ -743,8 +580,6 @@ def _save_3d_assignment(env: TerrainEnv,
                markersize=9, label='察打一体', markeredgecolor='black'),
         Line2D([0], [0], color='red', lw=0, marker='o', markersize=8,
                markerfacecolor='red', alpha=0.3, label='威胁区'),
-        Line2D([0], [0], color='#7f8c8d', lw=0, marker='o', markersize=8,
-               markerfacecolor='#7f8c8d', alpha=0.4, label='障碍物'),
     ]
     ax3.legend(handles=top_legend, loc='upper right', fontsize=8)
 
@@ -752,12 +587,10 @@ def _save_3d_assignment(env: TerrainEnv,
     plt.savefig(filename, dpi=200, bbox_inches='tight')
     plt.close(fig)
 
-def _compare_assignments(old: Dict[str, List[int]],
-                         new: Dict[str, List[int]],
-                         env: TerrainEnv,
-                         agent_names: List[str] = None,
-                         all_agent_names: List[str] = None) -> str:
-    """生成重分配前后对比表格（支持显示损失平台）"""
+def _compare_assignments(old: Dict[int, List[int]],
+                         new: Dict[int, List[int]],
+                         env: TerrainEnv) -> str:
+    """生成重分配前后对比表格"""
     lines = []
     lines.append("\n" + "=" * 90)
     lines.append("【重分配前后对比结果】")
@@ -766,21 +599,14 @@ def _compare_assignments(old: Dict[str, List[int]],
     lines.append(header)
     lines.append("-" * 90)
 
-    # 使用完整的原始平台列表，确保损失的平台也显示在表格中
-    display_names = all_agent_names if all_agent_names else sorted(set(list(old.keys()) + list(new.keys())))
-
-    for agent_name in display_names:
-        old_tasks = old.get(agent_name, [])
-        new_tasks = new.get(agent_name, [])
-        old_tasks = old_tasks if old_tasks is not None else []
-        new_tasks = new_tasks if new_tasks is not None else []
-
+    all_pids = sorted(set(list(old.keys()) + list(new.keys())))
+    for pid in all_pids:
+        old_tasks = old.get(pid, [])
+        new_tasks = new.get(pid, [])
         old_str = str([f"task_{t + 1:02d}" for t in old_tasks]) if old_tasks else "无"
         new_str = str([f"task_{t + 1:02d}" for t in new_tasks]) if new_tasks else "无"
 
-        if not old_tasks and not new_tasks:
-            change = "⚪ 无分配"
-        elif not old_tasks and new_tasks:
+        if not old_tasks and new_tasks:
             change = "🟢 新增分配"
         elif old_tasks and not new_tasks:
             change = "🔴 任务清空"
@@ -789,13 +615,13 @@ def _compare_assignments(old: Dict[str, List[int]],
         else:
             change = "🟡 任务变更"
 
-        lines.append(f"{agent_name:<10} {old_str:<35} {new_str:<35} {change}")
+        lines.append(f"agent_{pid:<4} {old_str:<35} {new_str:<35} {change}")
 
     # 统计行
     old_targets = set(t for tasks in old.values() for t in tasks)
     new_targets = set(t for tasks in new.values() for t in tasks)
     lines.append("-" * 90)
-    lines.append(f"覆盖目标数: {len(old_targets)} → {len(new_targets)} / {len(env.geo_targets)}")
+    lines.append(f"覆盖目标数: {len(old_targets)} → {len(new_targets)} / {len(env.targets)}")
     lines.append(f"新增覆盖: {len(new_targets - old_targets)} 个 | 失去覆盖: {len(old_targets - new_targets)} 个")
     lines.append("=" * 90)
     return "\n".join(lines)
@@ -863,11 +689,11 @@ def _apply_nearest_fallback(assignment: Dict[int, List[int]], env: TerrainEnv) -
                 best_alt = alt_tid
 
         # 必须明显更近才换（至少近一半以上，防止微调引发震荡）
-        if best_alt is not None and cur_dist > 15_000 and best_dist < cur_dist * 0.8:
-            print(f"🔄 就近: P{pid}({p.type}) T{first_tid}({first_t.task_type},{cur_dist/1000:.1f}km) "
+        if best_alt is not None and best_dist < cur_dist * 0.5:
+            print(f"🔄 就近兜底: P{pid}({p.type}) T{first_tid}({first_t.task_type},{cur_dist/1000:.1f}km) "
                   f"→ T{best_alt}({env.targets[best_alt].task_type},{best_dist/1000:.1f}km)")
             tids[0] = best_alt
-            assigned_set.discard(first_tid)
+            assigned_set.remove(first_tid)
             assigned_set.add(best_alt)
 
     return new_assignment
@@ -887,12 +713,8 @@ def plan_assignments(
     state: dict[str, Any] | None = None,
     event: dict[str, Any] | None = None,
     scenario_name: str | None = None,
-    available_agent_positions: dict[str, Any] | None = None,
-    pending_task_positions: dict[str, Any] | None = None,
-    active_task_ids: set[str] | None = None,
-    original_platform_count: int | None = None,   # ← 新增
-    original_target_count: int | None = None,      # ← 新增
-    completed_task_ids: set[str] | None = None,   # ← 新增
+    available_agent_positions: dict[str, Any] | None = None,   # ← 新增
+    pending_task_positions: dict[str, Any] | None = None,      # ← 新增
 ) -> dict[str, Any] | None:
     """
     外部任务分配接口标准入口。
@@ -907,51 +729,22 @@ def plan_assignments(
     # ------------------------------------------------------------------
     # 5.1 获取场景数据（三种来源，按优先级：外部payload > 外部位置 > 本地文件）
     # ------------------------------------------------------------------
-    platform_configs = []
-    target_configs = []
+    platform_configs = []   # 平台设置，平台属性从这里读取
+    target_configs = []     # 目标设置，任务属性从这里读取
     default_agent_names = []
     default_task_ids = []
 
     # 优先级1：外部直接传入完整的 scenario_payload（JSON 解析后的字典）
     if scenario_payload is not None and isinstance(scenario_payload, dict) and scenario_payload:
-        platform_configs, target_configs, default_agent_names, default_task_ids, obstacles = _parse_scenario(
-            scenario_payload)
-        _global_state['obstacles'] = obstacles
+        platform_configs, target_configs, default_agent_names, default_task_ids = _parse_scenario(scenario_payload)
 
-        # 【关键】保留全部目标配置，确保内部节点数与训练时一致
-        # 只记录未激活的目标ID和geo_id，用于在 bibi.py 中做 action mask
-        inactive_task_ids = set()
-        inactive_geo_ids = set()
-        if active_task_ids is not None:
-            inactive_task_ids = set(default_task_ids) - active_task_ids
-            for i, tid in enumerate(default_task_ids):
-                if tid in inactive_task_ids:
-                    inactive_geo_ids.add(i)
-        _global_state['inactive_task_ids'] = inactive_task_ids
-        _global_state['inactive_geo_ids'] = inactive_geo_ids
-        print(f"[Adapter] 场景模式：共 {len(default_task_ids)} 个目标，"
-              f"激活 {len(default_task_ids) - len(inactive_task_ids)} 个，"
-              f"未激活 {len(inactive_task_ids)} 个，未激活geo_ids: {inactive_geo_ids}")
-    # 优先级2：外部传入平台/目标位置（路径规划端主流程标准方式，完全不依赖文件）
+    # 优先级2：外部传入平台/目标位置（师兄主流程标准方式，完全不依赖文件）
     elif available_agent_positions is not None and pending_task_positions is not None:
-        # 平台：按原始编号查类型，不因损失/重分配而错位
+        # 平台：以 agent_names（如果传入）或 available_agent_positions 的 keys 为准
         names_to_use = agent_names if agent_names else list(available_agent_positions.keys())
-        # 用传入的原始总数，没传再用估算
-        if original_platform_count is not None:
-            original_n = original_platform_count
-        else:
-            try:
-                original_n = max(int(name.split('_')[1]) for name in names_to_use if '_' in name) + 1
-            except ValueError:
-                original_n = len(names_to_use)
-
         for i, name in enumerate(names_to_use):
             pos = available_agent_positions.get(name, [50.0, 50.0, 3.0])
-            try:
-                agent_idx = int(name.split('_')[1])
-            except (ValueError, IndexError):
-                agent_idx = i
-            ptype = _get_platform_type_by_index(agent_idx, original_n)
+            ptype = DEFAULT_PLATFORM_TYPES[i % len(DEFAULT_PLATFORM_TYPES)]
             platform_configs.append({
                 'type': ptype,
                 'payload': None,
@@ -961,53 +754,28 @@ def plan_assignments(
             })
         default_agent_names = names_to_use
 
-        # 目标：先根据 active_task_ids 过滤 pending_task_positions
+        # 目标：以 task_count（如果传入）或 pending_task_positions 长度为准
         task_ids_from_pos = list(pending_task_positions.keys())
-        inactive_task_ids = set()
-        if active_task_ids is not None:
-            inactive_task_ids = set(default_task_ids) - active_task_ids
-        # 已完成的目标也视为不参与分配
-        if completed_task_ids:
-            inactive_task_ids = inactive_task_ids | completed_task_ids
-            print(f"[Adapter] 已完成目标: {len(completed_task_ids)} 个")
-        if active_task_ids is not None or completed_task_ids:
-            print(f"[Adapter] 收到 {len(pending_task_positions)} 个目标，"
-                  f"参与分配 {len(pending_task_positions) - len(inactive_task_ids)} 个，"
-                  f"不参与 {len(inactive_task_ids)} 个")
-        _global_state['inactive_task_ids'] = inactive_task_ids
-
-        n_targets_actual = len(task_ids_from_pos)
-
-        # 【修改】优先用上层传入的原始目标总数，没传再用估算
-        if original_target_count is not None and original_target_count > 0:
-            original_n_targets = original_target_count
-        else:
-            try:
-                original_n_targets = max(int(tid.split('_')[1]) for tid in task_ids_from_pos if '_' in tid)
-            except ValueError:
-                original_n_targets = n_targets_actual
-
-        recon_count = 0
-        multi_count = 0
+        n_targets_actual = int(task_count) if task_count else len(task_ids_from_pos)
         for i in range(n_targets_actual):
-            task_id = task_ids_from_pos[i]
-            pos = pending_task_positions[task_id]
-            try:
-                target_idx = int(task_id.split('_')[1]) - 1  # task_03 → 索引 2
-            except (ValueError, IndexError):
-                target_idx = i
-            ttype = _get_target_type_by_index(target_idx, original_n_targets)
+            if i < len(task_ids_from_pos):
+                task_id = task_ids_from_pos[i]
+                pos = pending_task_positions[task_id]
+            else:
+                # task_count 大于实际传入位置数时，补充默认位置
+                task_id = f"task_{i+1:02d}"
+                pos = [50.0, 50.0, 0.0]
+
+            ttype = DEFAULT_TARGET_TYPES[i % len(DEFAULT_TARGET_TYPES)]
             if ttype == '侦察':
                 tw_start, tw_end = 0, 1000
                 req_payload = 1
-                value = 0.5 + recon_count * 0.08
-                recon_count += 1
+                value = 0.5 + (i % 6) * 0.08
             else:  # 察打一体
-                tw_start = 100 + multi_count * 50
+                tw_start = 100 + (i % 10) * 50
                 tw_end = tw_start + 700
                 req_payload = 2
-                value = 0.8 + multi_count * 0.04
-                multi_count += 1
+                value = 0.8 + (i % 10) * 0.04
 
             target_configs.append({
                 'type': ttype,
@@ -1018,12 +786,7 @@ def plan_assignments(
                 'time_win_end': tw_end,
                 'predecessors': []
             })
-        default_task_ids = task_ids_from_pos
-        inactive_geo_ids = set()
-        for i, tid in enumerate(task_ids_from_pos):
-            if tid in inactive_task_ids:
-                inactive_geo_ids.add(i)
-        _global_state['inactive_geo_ids'] = inactive_geo_ids
+        default_task_ids = [f"task_{i+1:02d}" for i in range(n_targets_actual)]
 
     # 优先级3：从默认/指定文件读取（独立运行或测试模式）
     else:
@@ -1031,49 +794,37 @@ def plan_assignments(
         if os.path.exists(scenario_path):
             with open(scenario_path, 'r', encoding='utf-8') as f:
                 scenario_payload = json.load(f)
-            platform_configs, target_configs, default_agent_names, default_task_ids, obstacles = _parse_scenario(
-                scenario_payload)
-            _global_state['obstacles'] = obstacles
+            platform_configs, target_configs, default_agent_names, default_task_ids = _parse_scenario(scenario_payload)
         else:
             print(f"❌ 错误: 未收到外部场景数据，且默认场景文件 {scenario_path} 不存在")
+            print("   可能原因：")
+            print("   1. 师兄主流程未传入 available_agent_positions / pending_task_positions")
+            print("   2. 独立运行时未提供 --scenario 参数或场景文件缺失")
+            print("   解决：确保从主流程传入平台/目标位置，或提供有效的场景文件。")
             return None
 
-    # ------------------------------------------------------------------
-    # 5.2 统一对齐数量
-    # ------------------------------------------------------------------
+    # 如果路径规划端传入了 agent_names / task_count，以传入为准
     if agent_names:
         n_platforms = len(agent_names)
     else:
         n_platforms = len(platform_configs)
         agent_names = default_agent_names[:n_platforms]
 
-    n_targets = len(target_configs)
-
-    # 平台配置对齐：如果原始配置比实际平台数多（如损失后），按 agent_name 编号提取
-    if len(platform_configs) > n_platforms:
-        aligned_platform_configs = []
-        for name in agent_names:
-            try:
-                idx = int(name.split('_')[1])
-            except (ValueError, IndexError):
-                idx = len(aligned_platform_configs)
-            if idx < len(platform_configs):
-                aligned_platform_configs.append(platform_configs[idx])
-            else:
-                aligned_platform_configs.append({
-                    'type': '察打一体', 'payload': 5, 'max_range': 600e3,
-                    'pos': [50000.0, 50000.0, 3000.0]
-                })
-        platform_configs = aligned_platform_configs
+    if task_count:
+        n_targets = int(task_count)
     else:
-        platform_configs = platform_configs[:n_platforms]
+        n_targets = len(target_configs)
+
+    # 截断或补齐配置以匹配实际数量
+    platform_configs = platform_configs[:n_platforms]
     while len(platform_configs) < n_platforms:
+        # 应急情况下平台数增加时的默认配置
         platform_configs.append({
             'type': '察打一体', 'payload': 5, 'max_range': 600e3,
             'pos': [50000.0, 50000.0, 3000.0]
         })
 
-    # 补齐目标配置（理论上不会走到，因为 n_targets 已精确计算）
+    target_configs = target_configs[:n_targets]
     while len(target_configs) < n_targets:
         target_configs.append({
             'type': '察打一体', 'value': 0.7,
@@ -1083,17 +834,21 @@ def plan_assignments(
             'time_win_end': 1000, 'predecessors': []
         })
 
-    task_ids = default_task_ids if default_task_ids else [f"task_{i + 1:02d}" for i in range(n_targets)]
+    task_ids = [f"task_{i + 1:02d}" for i in range(n_targets)]
     if available_agent_positions:
+        print(f"[Adapter] 接收到 {len(available_agent_positions)} 个平台位置，正在同步...")
         for i, name in enumerate(agent_names):
             if i < len(platform_configs) and name in available_agent_positions:
                 platform_configs[i]['pos'] = _norm_position(available_agent_positions[name])
+                print(f"  → {name}: {platform_configs[i]['pos']}")
 
     if pending_task_positions:
-        for i, task_id in enumerate(default_task_ids):
+        print(f"[Adapter] 接收到 {len(pending_task_positions)} 个任务位置，正在同步...")
+        for i in range(n_targets):
+            task_id = f"task_{i + 1:02d}"
             if i < len(target_configs) and task_id in pending_task_positions:
                 target_configs[i]['pos'] = _norm_position(pending_task_positions[task_id])
-
+                print(f"  → {task_id}: {target_configs[i]['pos']}")
 
     # ------------------------------------------------------------------
     # 5.3 处理突发事件（更新位置 / 标记损失平台 / 新增目标）
@@ -1101,12 +856,8 @@ def plan_assignments(
     is_replan = (phase == "replan") or (event is not None)
     old_assignment = None
 
-    if is_replan:
-        if isinstance(state, dict) and state.get('last_assignment') is not None:
-            old_assignment = state.get('last_assignment')
-        else:
-            # 没传 state 时，自动从全局缓存里取上次结果
-            old_assignment = _global_state.get('last_assignment', None)
+    if is_replan and isinstance(state, dict):
+        old_assignment = state.get('last_assignment', None)
 
     # 位置变更事件：直接修改对应平台位置
     if event and event.get('type') == 'position_change':
@@ -1158,8 +909,6 @@ def plan_assignments(
         _global_state['env'] = env_local
 
     env_local.setup_scenario(platform_configs, target_configs)
-    env_local.inactive_geo_ids = _global_state.get('inactive_geo_ids', set())
-    env_local.inactive_task_ids = _global_state.get('inactive_task_ids', set())
 
     # 设置固定威胁区域（每次调用都重置，避免重复累积）
     env_local.threats = []
@@ -1198,19 +947,6 @@ def plan_assignments(
         _global_state['last_n_platforms'] = current_n_platforms
         _global_state['last_n_targets'] = current_n_targets
 
-    for geo_id, gt in enumerate(env_local.geo_targets):
-        if gt['type'] == '察打一体':
-            recon_node = None
-            strike_node = None
-            for nid in gt['task_ids']:
-                if 0 <= nid < len(env_local.targets):
-                    t = env_local.targets[nid]
-                    if t.task_type == '侦察':
-                        recon_node = nid
-                    elif t.task_type == '打击':
-                        strike_node = nid
-            if recon_node is not None and strike_node is not None:
-                env_local.targets[strike_node].predecessors = [recon_node]
     # ------------------------------------------------------------------
     # 5.5 执行分配（手动重置状态，不重新随机化位置）
     # ------------------------------------------------------------------
@@ -1219,53 +955,25 @@ def plan_assignments(
     for t in env_local.targets:
         t.reset()
     env_local.completed_tasks.clear()
-    if completed_task_ids:
-        # 将 completed_task_ids 转换为内部节点ID
-        task_id_to_idx = {tid: i for i, tid in enumerate(task_ids)}
-        for tid in completed_task_ids:
-            if tid in task_id_to_idx:
-                idx = task_id_to_idx[tid]
-                # 找到该目标对应的所有内部节点（侦察+打击）
-                if idx < len(env_local.geo_targets):
-                    for nid in env_local.geo_targets[idx]['task_ids']:
-                        env_local.completed_tasks.add(nid)
-        print(f"[Adapter] 环境已标记完成目标数: {len(env_local.completed_tasks)}")
     env_local.current_time = 0.0
     start_time = time.time()
     assignment, actions, _ = system.assign(evaluate=True)
     assignment = _apply_nearest_fallback(assignment, env_local)
-    inactive_geo_ids = getattr(env_local, 'inactive_geo_ids', set())
-    if inactive_geo_ids:
-        node_to_geo_local = {}
-        for geo_id, gt in enumerate(env_local.geo_targets):
-            for nid in gt['task_ids']:
-                node_to_geo_local[nid] = geo_id
-
-        filtered_assignment = {}
-        for pid, node_ids in assignment.items():
-            filtered = [nid for nid in node_ids
-                        if node_to_geo_local.get(nid) not in inactive_geo_ids]
-            if filtered:
-                filtered_assignment[pid] = filtered
-        assignment = filtered_assignment
     node_to_geo = {}
     for geo_id, gt in enumerate(env_local.geo_targets):
         for nid in gt['task_ids']:
             node_to_geo[nid] = geo_id
 
-    # 每个平台分配了哪些地理目标（去重，保持顺序），键直接使用 agent_name 避免 PID 错位
+    # 每个平台分配了哪些地理目标（去重，保持顺序）
     geo_assignment = {}
     for pid, node_ids in assignment.items():
-        if pid >= len(agent_names):
-            continue
-        agent_name = agent_names[pid]
         seen = []
         for nid in node_ids:
             if nid in node_to_geo:
                 gid = node_to_geo[nid]
                 if gid not in seen:
                     seen.append(gid)
-        geo_assignment[agent_name] = seen
+        geo_assignment[pid] = seen
 
     # 地理目标覆盖率统计
     geo_covered = set()
@@ -1275,30 +983,24 @@ def plan_assignments(
     # 5.6 格式化输出
     # ------------------------------------------------------------------
     elapsed_ms = (time.time() - start_time) * 1000.0
-    output_text = _format_assignment_text(geo_assignment, env_local, elapsed_ms, task_ids, agent_names)
+    output_text = _format_assignment_text(geo_assignment, env_local, elapsed_ms)
     print(output_text)
 
     # 生成3D场景图
     suffix = "_replan" if is_replan else "_initial"
     pic_name = f"assignment_3d{suffix}.png"
-    _save_3d_assignment(env_local, assignment, pic_name, geo_assignment, agent_names,
-                          _global_state.get('obstacles'))
+    _save_3d_assignment(env_local, assignment, pic_name, geo_assignment)
 
-    # 重分配对比表（传入完整原始平台列表，确保损失平台也显示）
+    # 重分配对比表
     comparison_text = None
     if is_replan and old_assignment is not None:
-        all_names = _global_state.get('all_agent_names', agent_names)
-        comparison_text = _compare_assignments(old_assignment, geo_assignment, env_local, agent_names, all_names)
+        comparison_text = _compare_assignments(old_assignment, assignment, env_local)
         print(comparison_text)
 
     # 更新全局状态中的上次分配结果
-    _global_state['last_assignment'] = geo_assignment
+    _global_state['last_assignment'] = assignment
     if isinstance(state, dict):
-        state['last_assignment'] = geo_assignment
-
-    # 初始分配时保存完整的平台列表，供后续重分配对比使用
-    if not is_replan:
-        _global_state['all_agent_names'] = agent_names[:]
+        state['last_assignment'] = assignment
 
     # ------------------------------------------------------------------
     # 5.7 构建标准返回结构
@@ -1313,20 +1015,10 @@ def plan_assignments(
         else:
             platform_types[name] = '察打一体'
 
-    # 构建目标类型映射，供下游 task_specs 使用
-    target_types = {}
-    for i, tid in enumerate(task_ids):
-        if i < len(target_configs):
-            target_types[tid] = target_configs[i]['type']
-        else:
-            target_types[tid] = '察打一体'
-
     result = {
         "agent_queues": agent_queues,
         "_platform_types": platform_types,
-        "_target_types": target_types,
-        "_inactive_task_ids": _global_state.get('inactive_task_ids', set()),
-        "_inactive_geo_ids": _global_state.get('inactive_geo_ids', set()),
+        # 以下字段供调试与下游扩展使用，不破坏路径规划端框架兼容性
         "_assignment_detail": assignment,
         "_output_text": output_text,
         "_elapsed_ms": elapsed_ms,
@@ -1364,9 +1056,9 @@ def assignment_provider(agent_names, task_count, assignment_override=None, **pro
         pending_task_positions is None and
         scenario_name):
         candidate_paths = [
-            f"{scenario_name}_collaborate.json",
-            f"{scenario_name}.json",
-            DEFAULT_SCENARIO_PATH,
+            f"{scenario_name}_collaborate.json",  # 例如 scenario_A_collaborate.json
+            f"{scenario_name}.json",              # 例如 scenario_A.json
+            DEFAULT_SCENARIO_PATH,                # 兜底
         ]
         for path in candidate_paths:
             if os.path.exists(path):
@@ -1374,91 +1066,59 @@ def assignment_provider(agent_names, task_count, assignment_override=None, **pro
                     scenario_payload = json.load(f)
                 break
 
-    # 3. 提取激活目标ID集合（只有 active=True 的目标才参与分配）
-    task_specs_in = provider_context.get('task_specs', [])
-    active_task_ids = None
-    if task_specs_in:
-        active_task_ids = {t['task_id'] for t in task_specs_in if t.get('active', False)}
-        print(f"[Adapter] 收到 {len(task_specs_in)} 个目标规格，其中 {len(active_task_ids)} 个已激活")
-    completed_task_ids = set()
-    if task_specs_in:
-        completed_task_ids = {t['task_id'] for t in task_specs_in if t.get('completed', False)}
-        print(f"[Adapter] 其中 {len(completed_task_ids)} 个目标已完成")
-
-    original_platform_count = len(agent_names)
-    original_target_count = len(task_specs_in) if task_specs_in else task_count
-
-    # 4. 调用你已有的核心分配逻辑
+    # 3. 调用你已有的核心分配逻辑（所有脏活累活都在这里面）
     result = plan_assignments(
         agent_names=agent_names,
         task_count=task_count,
         assignment_override=assignment_override,
         env=env,
-        args=None,
+        args=None,                       # 路径规划端框架不会传 argparse 对象
         scenario_payload=scenario_payload,
         phase=phase,
         state=state,
         event=event,
         scenario_name=scenario_name,
-        available_agent_positions=available_agent_positions,
-        pending_task_positions=pending_task_positions,
-        active_task_ids=active_task_ids,
-        original_platform_count=original_platform_count,  # ← 新增
-        original_target_count=original_target_count,
-        completed_task_ids=completed_task_ids,
+        available_agent_positions=available_agent_positions,  # ← 新增
+        pending_task_positions=pending_task_positions,  # ← 新增
     )
 
     if result is None:
         return None
 
-    # 5. 补充路径规划端框架强制要求的 task_specs（任务归属表）
+    # 4. 补充路径规划端框架强制要求的 task_specs（任务归属表）
     agent_queues = result.get("agent_queues", {})
     platform_types = result.get("_platform_types", {})
-    target_types = result.get("_target_types", {})
     task_to_agents = {}
     for agent, tasks in agent_queues.items():
         for task_id in tasks:
             task_to_agents.setdefault(task_id, []).append(agent)
 
-    # 基于路径规划端传入的 task_specs 更新 agents，保留 active / completed 状态
-    if task_specs_in:
-        task_specs = []
-        inactive_task_ids = result.get('_inactive_task_ids', set())
-        for spec in task_specs_in:
-            task_id = spec['task_id']
-            agents = task_to_agents.get(task_id, [])
-            # 未激活目标不分配任何平台
-            if task_id in inactive_task_ids:
-                agents = []
+    task_specs = []
+    for task_id, agents in task_to_agents.items():
+        # 从 task_id 推断目标类型（task_01 → index 0 → 侦察，task_07 → index 6 → 察打一体）
+        try:
+            task_idx = int(task_id.split('_')[1]) - 1
+            target_type = DEFAULT_TARGET_TYPES[task_idx] if task_idx < len(DEFAULT_TARGET_TYPES) else '察打一体'
+        except (ValueError, IndexError):
+            target_type = '察打一体'
 
-            # 对于察打一体目标，agents 按"先侦察、后打击"排序
-            if target_types.get(task_id) == '察打一体':
-                def _sort_key(agent_name):
-                    ptype = platform_types.get(agent_name, '察打一体')
-                    return 0 if ptype in ['侦察', '察打一体'] else 1
-                agents = sorted(agents, key=_sort_key)
+        # 对于察打一体目标，agents 按"先侦察、后打击"排序：
+        #   侦察平台 / 察打一体平台 排在前面（0）
+        #   打击平台 排在后面（1）
+        if target_type == '察打一体':
+            def _sort_key(agent_name):
+                ptype = platform_types.get(agent_name, '察打一体')
+                return 0 if ptype in ['侦察', '察打一体'] else 1
 
-            new_spec = dict(spec)
-            new_spec['agents'] = agents
-            new_spec['task_type'] = target_types.get(task_id, new_spec.get('task_type', '察打一体'))
-            task_specs.append(new_spec)
-    else:
-        # 兼容无 task_specs 传入的情况（独立运行测试）
-        task_specs = []
-        for task_id, agents in task_to_agents.items():
-            if target_types.get(task_id) == '察打一体':
-                def _sort_key(agent_name):
-                    ptype = platform_types.get(agent_name, '察打一体')
-                    return 0 if ptype in ['侦察', '察打一体'] else 1
-                agents = sorted(agents, key=_sort_key)
-            task_specs.append({
-                "task_id": task_id,
-                "agents": agents,
-                "label": task_id,
-                "task_type": target_types.get(task_id, '察打一体'),
-                "active": True,
-                "completed": False,
-            })
+            agents = sorted(agents, key=_sort_key)
+
+        task_specs.append({
+            "task_id": task_id,
+            "agents": agents,
+            "label": task_id,
+            "active": True,
+            "completed": False,
+        })
 
     result["task_specs"] = task_specs
     return result
@@ -1471,7 +1131,7 @@ def run_standalone(scenario_path: str = DEFAULT_SCENARIO_PATH,
     """
     独立运行演示：
       1) 读取 scenario_A.json 执行初始分配
-      2) 模拟平台 agent_1 损失，执行重分配并输出对比表
+      2) 模拟平台 agent_2 损失，执行重分配并输出对比表
     """
     print("=" * 70)
     print("智能空面协同任务分配 - 对接程序独立测试模式")
@@ -1484,10 +1144,8 @@ def run_standalone(scenario_path: str = DEFAULT_SCENARIO_PATH,
     with open(scenario_path, 'r', encoding='utf-8') as f:
         scenario_payload = json.load(f)
 
-    start_positions = scenario_payload.get('start_positions', [])
-    task_positions = scenario_payload.get('task_positions', [])
-    n_platforms = len(start_positions)
-    n_targets = len(task_positions)
+    n_platforms = len(scenario_payload.get('start_positions', []))
+    n_targets = len(scenario_payload.get('task_positions', []))
     agent_names = [f"agent_{i}" for i in range(n_platforms)]
 
     # 覆盖默认模型路径
@@ -1507,15 +1165,12 @@ def run_standalone(scenario_path: str = DEFAULT_SCENARIO_PATH,
     print("\n【阶段1 task_specs】")
     print(json.dumps(result_initial.get("task_specs", []), ensure_ascii=False, indent=4))
 
-    # ---------- 模拟应急：平台 agent_1 损失 ----------
-    print("\n【阶段2】模拟应急重分配（平台 agent_1 损失）")
-    new_agent_names = [a for a in agent_names if a != "agent_1"]
-    # 构造位置字典走优先级2，避免 JSON 截断导致平台配置错位
-    avail_pos = {f"agent_{i}": start_positions[i] for i in range(n_platforms) if f"agent_{i}" in new_agent_names}
-    pend_pos = {f"task_{i+1:02d}": task_positions[i] for i in range(n_targets)}
+    # ---------- 模拟应急：平台 agent_2 损失 ----------
+    print("\n【阶段2】模拟应急重分配（平台 agent_2 损失）")
+    new_agent_names = [a for a in agent_names if a != "agent_2"]
     event = {
         'type': 'agent_loss',
-        'lost_agent_id': 1,
+        'lost_agent_id': 2,
         'remaining_task_ids': list(range(n_targets))
     }
 
@@ -1523,8 +1178,6 @@ def run_standalone(scenario_path: str = DEFAULT_SCENARIO_PATH,
         agent_names=new_agent_names,
         task_count=n_targets,
         scenario_payload=scenario_payload,
-        available_agent_positions=avail_pos,
-        pending_task_positions=pend_pos,
         phase="replan",
         state=state,
         event=event

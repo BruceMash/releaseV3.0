@@ -19,7 +19,6 @@ import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.lines import Line2D
-from matplotlib.gridspec import GridSpec
 from typing import Dict, List, Tuple, Optional, Set
 import time
 from dataclasses import dataclass
@@ -488,7 +487,7 @@ class Platform:
 
 
 class Target:
-    """任务类"""
+    """目标类"""
     TASKS = ['侦察', '打击', '察打一体']
     COLORS = {'侦察': '#ffd700', '打击': '#d62728', '察打一体': '#2ca02c'}
     MARKERS = {'侦察': 's', '打击': '^', '察打一体': 'd'}
@@ -516,7 +515,7 @@ class Target:
             self.temporal_weight = 0.0
 
     def get_state(self) -> np.ndarray:
-        """获取任务状态向量"""
+        """获取目标状态向量"""
         task_enc = np.zeros(3, dtype=np.float32)
         task_enc[self.TASKS.index(self.task_type)] = 1.0
         # 原有14维 + 新增2维（是否有前序、前序完成比例）
@@ -691,14 +690,14 @@ class TerrainEnv(Environment):
         """
         外部输入接口：
         - platform_configs: 平台配置列表
-        - target_configs: 地理任务配置列表（16个）
-          侦察任务 → 1个侦察任务节点
-          察打一体任务 → 2个节点（侦察+打击，同一位置，时序绑定）
+        - target_configs: 地理目标配置列表（16个）
+          侦察目标 → 1个侦察任务节点
+          察打一体目标 → 2个节点（侦察+打击，同一位置，时序绑定）
         内部实际任务节点数 = 6 + 10×2 = 26个
         """
         self.platforms.clear()
         self.targets.clear()
-        self.geo_targets = []  # 记录16个地理任务与内部节点的映射
+        self.geo_targets = []  # 记录16个地理目标与内部节点的映射
 
         # 创建平台
         for i, cfg in enumerate(platform_configs):
@@ -711,7 +710,7 @@ class TerrainEnv(Environment):
             )
             self.platforms.append(p)
 
-        # 创建任务（察打一体自动拆分）
+        # 创建目标（察打一体自动拆分）
         node_id = 0
         for geo_id, cfg in enumerate(target_configs):
             pos = np.array(cfg['pos'], dtype=np.float32)
@@ -730,7 +729,7 @@ class TerrainEnv(Environment):
                 recon_id = node_id
                 node_id += 1
 
-                # 阶段2：打击（前置必须是本任务的侦察段）
+                # 阶段2：打击（前置必须是本目标的侦察段）
                 t_attack = Target(
                     id=node_id, pos=pos, task_type='打击',
                     value=cfg.get('value', 0.5) * 0.6,
@@ -747,7 +746,7 @@ class TerrainEnv(Environment):
                     'task_ids': [recon_id, recon_id + 1]
                 })
             else:
-                # 侦察任务
+                # 侦察目标
                 t = Target(
                     id=node_id, pos=pos, task_type=ttype,
                     value=cfg.get('value', 0.5),
@@ -784,10 +783,10 @@ class TerrainEnv(Environment):
 
     def _init_targets(self):
         return
-        """初始化任务 - 修复版（解决IndexError）"""
+        """初始化目标 - 修复版（解决IndexError）"""
         self.targets = []
 
-        # 第一步：预生成所有任务的位置和任务类型（不创建对象）
+        # 第一步：预生成所有目标的位置和任务类型（不创建对象）
         target_infos = []
         for i in range(config.N_TARGETS):
             lon = random.uniform(self.terrain.lon_min + 0.01, self.terrain.lon_max - 0.01)
@@ -810,7 +809,7 @@ class TerrainEnv(Environment):
                 continue
 
             if task_type == 'attack' and i > 0:
-                # 攻击任务需要前置侦查任务（只能从前面任务中选择，确保无环）
+                # 攻击任务需要前置侦查任务（只能从前面目标中选择，确保无环）
                 potential_preds = [j for j in range(i)
                                    if target_infos[j]['task_type'] == 'reconnaissance'and len(target_infos[j]['predecessors']) == 0]
                 if potential_preds:
@@ -834,7 +833,7 @@ class TerrainEnv(Environment):
             self.targets.append(target)
 
         independent = sum(1 for t in self.targets if not t.predecessors)
-        print(f"任务生成完成: {independent}/{config.N_TARGETS}个无依赖任务（确保初始可分配）")
+        print(f"目标生成完成: {independent}/{config.N_TARGETS}个无依赖目标（确保初始可分配）")
 
         # 打印时序约束信息用于调试
         temporal_edges = [(t.predecessors, t.id) for t in self.targets if t.predecessors]
@@ -870,12 +869,12 @@ class TerrainEnv(Environment):
             ))
 
     def reset(self):
-        """重置环境 - 重新生成任务位置确保多样性"""
+        """重置环境 - 重新生成目标位置确保多样性"""
         # 重置平台状态
         for p in self.platforms:
             p.reset()
 
-        # 关键修复：重新随机生成任务位置（而非仅重置completed标志）
+        # 关键修复：重新随机生成目标位置（而非仅重置completed标志）
         # 保留原有依赖关系，但随机化位置和其他属性
         for i, t in enumerate(self.targets):
             t.reset()  # 重置completed和assigned_platform
@@ -891,9 +890,9 @@ class TerrainEnv(Environment):
         self.completed_tasks.clear()
         self.current_time = 0.0
 
-        # 调试：打印新生成的任务位置范围
+        # 调试：打印新生成的目标位置范围
         if random.random() < 0.01:  # 1%概率打印避免刷屏
-            print(f"环境重置: 任务位置已重新随机化")
+            print(f"环境重置: 目标位置已重新随机化")
 
 
 # ========== 1. 动态维度GNN编码器（替换原SimpleEncoder）==========
@@ -922,7 +921,7 @@ class GATEncoder(nn.Module):
         if adj_matrix is not None:
             scores = scores.masked_fill(adj_matrix == 0, float('-inf'))
 
-            # 关键修复：检查哪些行全为 -inf（无可用任务），将其设为 0 避免 NaN
+            # 关键修复：检查哪些行全为 -inf（无可用目标），将其设为 0 避免 NaN
             # 如果一行全被 mask，则将该行所有分数设为 0（softmax 后变成均匀分布）
             valid_rows = (adj_matrix != 0).any(dim=-1, keepdim=True)  # [n_p, 1]
             scores = torch.where(valid_rows, scores, torch.zeros_like(scores))
@@ -1144,7 +1143,7 @@ class MASAC:
             current_mask_dim = mask.shape[-1]
             if current_mask_dim != actual_dim:
                 if current_mask_dim < actual_dim:
-                    # mask太短，补1（允许选择新任务）
+                    # mask太短，补1（允许选择新目标）
                     padding = torch.ones(actual_dim - current_mask_dim, device=self.device)
                     mask = torch.cat([mask, padding])
                 else:
@@ -1196,7 +1195,7 @@ class MASAC:
         next_states = torch.FloatTensor(np.array([t.next_states for t in batch])).to(self.device)
         dones = torch.FloatTensor([t.dones for t in batch]).unsqueeze(-1).to(self.device)
 
-        max_action = config.ACTION_DIM  # 固定为17（16任务+1idle）
+        max_action = config.ACTION_DIM  # 固定为17（16目标+1idle）
 
         # Critic当前Q值计算
         actions_onehot = F.one_hot(actions, num_classes=max_action).float()
@@ -1259,7 +1258,7 @@ class IRLRewardLearner(nn.Module):
         self.action_dim = action_dim
 
         # 使用原始特征维度而非GNN编码后的维度
-        # 平台状态11维 + 任务状态16维 + 动作one-hot
+        # 平台状态11维 + 目标状态16维 + 动作one-hot
         input_dim = config.PLATFORM_DIM + config.TARGET_DIM + action_dim
 
         # 从状态-动作特征推断奖励（替代手工设计的reward）
@@ -1317,7 +1316,7 @@ class ConvergenceMonitor:
         n_platforms_assigned = len([pid for pid, tids in assignment.items()
                                     if isinstance(tids, list) and len(tids) > 0]) if assignment else 0
 
-        # 真正覆盖的唯一任务数
+        # 真正覆盖的唯一目标数
         all_tids = []
         for tids in assignment.values():
             if isinstance(tids, list):
@@ -1326,7 +1325,7 @@ class ConvergenceMonitor:
                 all_tids.append(tids)
         n_targets_assigned = len(set(all_tids))
 
-        # 以任务全覆盖为判断标准（你的核心需求）
+        # 以目标全覆盖为判断标准（你的核心需求）
         full_coverage = (n_targets_assigned == config.N_TARGETS)
 
         # 初始化状态字典
@@ -1441,7 +1440,7 @@ class TaskSystem:
                     # 移除最旧的项
                     self.popitem(last=False)
 
-        # 修改这里：限制缓存5000条（足够8-12平台×14-18任务使用）
+        # 修改这里：限制缓存5000条（足够8-12平台×14-18目标使用）
         self._distance_cache = LimitedSizeDict(size_limit=5000)
 
         # 添加奖励归一化统计
@@ -1491,7 +1490,7 @@ class TaskSystem:
         rejected_reasons = {'assigned': 0, 'temporal': 0, 'completed': 0, 'payload': 0, 'capability': 0, 'time_window': 0, 'range': 0}
 
         for j, t in enumerate(self.env.targets):
-            # 1. 已分配任务排除
+            # 1. 已分配目标排除
             if j in assigned_targets:
                 rejected_reasons['assigned'] += 1
                 mask[j] = 0.0
@@ -1513,7 +1512,7 @@ class TaskSystem:
                 rejected_reasons['capability'] += 1
                 continue
             # ===== 时间窗口约束（仅对打击任务生效） =====
-            # 统一计算当前平台到任务的距离（时间窗口和航程约束都需要）
+            # 统一计算当前平台到目标的距离（时间窗口和航程约束都需要）
             dist = np.linalg.norm(p.position - t.position)
 
             # ===== 时间窗口约束（仅对打击任务生效） =====
@@ -1526,18 +1525,16 @@ class TaskSystem:
                     continue
 
             # ===== 航程约束（累加已分配航段） =====
-            total_dist = 0.0
-            prev_pos = p.position
+            total_dist = dist  # 当前这段距离
 
             # 如果该平台已有分配任务，累加之前的航段
             if current_assignment and current_platform_id in current_assignment:
+                prev_pos = p.position
                 for prev_tid in current_assignment[current_platform_id]:
                     if prev_tid < len(self.env.targets):
-                        total_dist += np.linalg.norm(prev_pos - self.env.targets[prev_tid].position)
-                        prev_pos = self.env.targets[prev_tid].position
-
-                # 从最后一个已分配任务（或平台初始位置）到当前目标
-            total_dist += np.linalg.norm(prev_pos - t.position)
+                        prev_target = self.env.targets[prev_tid]
+                        total_dist += np.linalg.norm(prev_pos - prev_target.position)
+                        prev_pos = prev_target.position
 
             if total_dist > p.max_range:
                 rejected_reasons['range'] = rejected_reasons.get('range', 0) + 1
@@ -1548,15 +1545,11 @@ class TaskSystem:
             # 空闲动作始终可用（最后一个位置）
         mask[-1] = 1.0
 
-        if hasattr(self.env, 'inactive_geo_ids') and self.env.inactive_geo_ids:
-            for geo_id in self.env.inactive_geo_ids:
-                if 0 <= geo_id < len(self.env.geo_targets):
-                    for nid in self.env.geo_targets[geo_id]['task_ids']:
-                        if 0 <= nid < len(mask) - 1:  # 不屏蔽 idle 动作
-                            mask[nid] = 0.0
+
 
         # 调试输出
         if current_platform_id < 1 and sum(mask[:-1]) == 0 and random.random() < 0.01:
+            print(f"平台{current_platform_id}: 无可选目标! 统计: {rejected_reasons}")
             print(f"  completed_targets集合: {completed_targets}")
 
         return mask
@@ -1596,7 +1589,7 @@ class TaskSystem:
             if t.task_type == '打击' and t.predecessors:
                 critical_recon_ids.update(t.predecessors)
 
-        # 按任务ID排序，确保稳定分配
+        # 按目标ID排序，确保稳定分配
         for crit_tid in sorted(critical_recon_ids):
             if crit_tid in assigned_targets:
                 continue  # 已被预分配
@@ -1609,8 +1602,8 @@ class TaskSystem:
                 p = self.env.platforms[pid]
                 if not p.can_do('侦察'):
                     continue
-                # 【关键修改】预分配阶段跳过纯侦察平台，留给第一轮就近选择家门口任务
-                # 理由：纯侦察平台只能做侦察，如果被绑去远处，家门口的纯侦察任务就空了
+                # 【关键修改】预分配阶段跳过纯侦察平台，留给第一轮就近选择家门口目标
+                # 理由：纯侦察平台只能做侦察，如果被绑去远处，家门口的纯侦察目标就空了
                 if p.type == '侦察':
                     continue
                 dist = np.linalg.norm(p.position - t.position)
@@ -1628,7 +1621,7 @@ class TaskSystem:
                 completed_targets.add(crit_tid)
                 self.env.mark_target_completed(crit_tid)
 
-        # ========== 第一轮：每个平台只分配1个任务（确保12/12全覆盖）==========
+        # ========== 第一轮：每个平台只分配1个目标（确保12/12全覆盖）==========
         for i in platform_order:
             # 已有预分配任务的平台，不再抢占其他稀缺资源
             if len(assignment[i]) > 0:
@@ -1640,7 +1633,7 @@ class TaskSystem:
                 current_assignment=assignment
             ).cpu().numpy()
 
-            # 无可选任务则跳过
+            # 无可选目标则跳过
             if np.sum(action_mask[:-1]) == 0:
                 continue
 
@@ -1659,8 +1652,8 @@ class TaskSystem:
                                           platform.position - self.env.targets[tid].position))
                     nearest_dist = np.linalg.norm(platform.position - self.env.targets[nearest_tid].position)
 
-                    # 替换条件：最近任务明显更近（<60% 或 绝对差>20km）
-                    if nearest_dist < current_dist * 0.6 or (current_dist - nearest_dist) > 20e3:
+                    # 替换条件：最近目标明显更近（<60% 或 绝对差>20km）
+                    if nearest_dist < current_dist * 0.6 or (current_dist - nearest_dist) > 30e3:
                         action = nearest_tid
 
             if action < len(self.env.targets):
@@ -1682,7 +1675,7 @@ class TaskSystem:
                     self.env.mark_target_completed(action)
 
                 else:
-                    # 网络选了非法任务，强制纠正为最近合法任务
+                    # 网络选了非法目标，强制纠正为最近合法目标
                     available = np.where(action_mask[:-1] == 1)[0]
                     valid_alts = [tid for tid in available if tid not in assigned_targets]
                     if len(valid_alts) > 0:
@@ -1695,7 +1688,7 @@ class TaskSystem:
                         completed_targets.add(best_tid)
                         self.env.mark_target_completed(best_tid)
             else:
-                # 网络选idle，但还有可用任务，强制分配最近合法任务
+                # 网络选idle，但还有可用目标，强制分配最近合法目标
                 available = np.where(action_mask[:-1] == 1)[0]
                 valid_alts = [tid for tid in available if tid not in assigned_targets]
                 if len(valid_alts) > 0:
@@ -1708,7 +1701,7 @@ class TaskSystem:
                     completed_targets.add(best_tid)
                     self.env.mark_target_completed(best_tid)
 
-        # ========== 第二轮：有剩余载荷的平台继续分配额外任务 ==========
+        # ========== 第二轮：有剩余载荷的平台继续分配额外目标 ==========
         for i in platform_order:
             platform = self.env.platforms[i]
             used_payload = sum(self.env.targets[tid].req_payload for tid in assignment[i])
@@ -1769,7 +1762,7 @@ class TaskSystem:
                         self.env.mark_target_completed(action)
                         remaining_payload -= target.req_payload
                     else:
-                        # 尝试找一个小载荷替代任务
+                        # 尝试找一个小载荷替代目标
                         if target.req_payload > remaining_payload:
                             found = False
                             for alt_tid in range(n_targets):
@@ -1787,7 +1780,7 @@ class TaskSystem:
                             if not found:
                                 break
                         else:
-                            # ===== 修改3：训练引导（网络选的任务无效，强制纠正）=====
+                            # ===== 修改3：训练引导（网络选的目标无效，强制纠正）=====
                             if not evaluate and remaining_payload > 0:
                                 available = np.where(action_mask[:-1] == 1)[0]
                                 valid_alts = [tid for tid in available
@@ -1806,7 +1799,7 @@ class TaskSystem:
                                     continue  # 继续while循环，尝试再分一个
                             break
                 else:
-                    # 网络选了idle，用距离最近合法任务兜底（训练+评估都生效）
+                    # 网络选了idle，用距离最近合法目标兜底（训练+评估都生效）
                     if remaining_payload > 0:
                         available = np.where(action_mask[:-1] == 1)[0]
                         if len(available) > 0:
@@ -1876,15 +1869,12 @@ class TaskSystem:
                 if t.predecessors and not all(p_id in completed_targets for p_id in t.predecessors):
                     continue
 
-                # 4. 航程约束（从当前末端位置到任务）
-                prev_pos = p.position
-                cumulative_dist = 0.0
-                for prev_tid in assignment[pid]:
-                    if prev_tid < len(self.env.targets):
-                        cumulative_dist += np.linalg.norm(prev_pos - self.env.targets[prev_tid].position)
-                        prev_pos = self.env.targets[prev_tid].position
-                cumulative_dist += np.linalg.norm(prev_pos - t.position)
-                if cumulative_dist > p.max_range:
+                # 4. 航程约束（从当前末端位置到目标）
+                if assignment[pid]:
+                    prev_pos = self.env.targets[assignment[pid][-1]].position
+                else:
+                    prev_pos = p.position
+                if np.linalg.norm(prev_pos - t.position) > p.max_range:
                     continue
 
                 dist = np.linalg.norm(p.position - t.position)
@@ -1924,7 +1914,7 @@ class TaskSystem:
         # ========== 2. 时间代价 J_e（取所有平台最大完成时间，归一化）==========
         J_e = 0.0
 
-        # ========== 3. 任务收益 J_a（与覆盖任务的价值、数量、匹配度正相关）==========
+        # ========== 3. 任务收益 J_a（与覆盖目标的价值、数量、匹配度正相关）==========
         J_a = 0.0
         assigned_target_values = []
 
@@ -1946,7 +1936,7 @@ class TaskSystem:
                 platform_dist += dist
                 prev_pos = t.position
 
-                # J_a 项：收集该任务的价值和类型匹配收益
+                # J_a 项：收集该目标的价值和类型匹配收益
                 target_value = t.value
                 if p.type == t.task_type:
                     match_bonus = 1.0  # 完全匹配，高收益
@@ -1990,9 +1980,9 @@ class TaskSystem:
         platform_coverage_reward = n_platforms_assigned * 0.5  # 从5降到0.5
 
         n_uncovered = n_targets - unique_targets
-        uncovered_penalty = n_uncovered * 40.0  # 每个未覆盖任务只罚20
+        uncovered_penalty = n_uncovered * 40.0  # 每个未覆盖目标只罚20
 
-        # 任务收益（与任务价值、类型匹配度相关）
+        # 任务收益（与目标价值、类型匹配度相关）
         total_value = sum(assigned_target_values) if assigned_target_values else 0.0
         J_a = total_value * 10.0  # 从3.0提高到4.0，整体放大收益
 
@@ -2136,13 +2126,13 @@ class TaskSystem:
                 platform_time += time
                 prev_pos = t.position
 
-                lines.append(f"  → 任务{tid}({t.task_type}) | 距离:{dist / 1000:.1f}km | 用时:{time:.0f}s")
+                lines.append(f"  → 目标{tid}({t.task_type}) | 距离:{dist / 1000:.1f}km | 用时:{time:.0f}s")
                 assigned_targets.add(tid)
 
             lines.append(f"  小计: 航程{platform_dist / 1000:.1f}km | 总时间{platform_time:.0f}s")
             total_cost += platform_dist
 
-        # 未分配任务
+        # 未分配目标
         all_targets = set(range(len(self.env.targets)))
         unassigned = sorted(all_targets - assigned_targets)
 
@@ -2150,9 +2140,9 @@ class TaskSystem:
         lines.append(f"总航程代价: {total_cost / 1000:.1f} km")
 
         if unassigned:
-            lines.append(f"⚠️ 未完全覆盖！未分配任务: {unassigned}")
+            lines.append(f"⚠️ 未完全覆盖！未分配目标: {unassigned}")
         else:
-            lines.append(f"✅ 完全覆盖！所有{len(self.env.targets)}个任务已分配")
+            lines.append(f"✅ 完全覆盖！所有{len(self.env.targets)}个目标已分配")
 
         lines.append("=" * 60)
         return "\n".join(lines)
@@ -2265,7 +2255,7 @@ class OnlineFineTuner:
 
     def adapt_to_new_size(self, n_platforms: int, n_targets: int):
         # ===== 新增：安全检查 =====
-        # 检查变化范围（您的场景：平台8-12，任务14-18，变化±2）
+        # 检查变化范围（您的场景：平台8-12，目标14-18，变化±2）
         current_n_platforms = len(self.system.env.platforms)
         current_n_targets = len(self.system.env.targets)
 
@@ -2273,12 +2263,12 @@ class OnlineFineTuner:
         target_change = abs(n_targets - current_n_targets)
 
         if platform_change > 2 or target_change > 4:  # 放宽到4，允许一次+2后再次+2
-            print(f"❌ 拒绝调整：变化过大（平台±{platform_change}, 任务±{target_change}），超过安全阈值(2,4)")
+            print(f"❌ 拒绝调整：变化过大（平台±{platform_change}, 目标±{target_change}），超过安全阈值(2,4)")
             print(f"   建议：重启训练或使用更保守的应急策略")
             return
 
         if target_change > 2:
-            print(f"⚠️  警告：任务变化{target_change}较大，可能影响模型稳定性")
+            print(f"⚠️  警告：目标变化{target_change}较大，可能影响模型稳定性")
 
         # 清空所有缓存（防止旧维度数据污染新网络）
         self.system._distance_cache.clear()
@@ -2340,7 +2330,7 @@ class OnlineFineTuner:
 
             print(f"平台数变化：{current_n_platforms} → {n_platforms}，Critic已重建")
         else:
-            # 仅任务数变化：复用原有权重迁移逻辑
+            # 仅目标数变化：复用原有权重迁移逻辑
             new_critic = Critic(new_action_dim, n_platforms=n_platforms).to(self.system.device)
 
             with torch.no_grad():
@@ -2360,10 +2350,10 @@ class OnlineFineTuner:
                                 if old_layer.bias is not None:
                                     new_layer.bias.copy_(old_layer.bias)
 
-            # 同步更新Critic任务网络（关键！）
+            # 同步更新Critic目标网络（关键！）
         self.system.masac.critic = new_critic
         self.system.masac.critic_target = Critic(new_action_dim, n_platforms=n_platforms).to(self.system.device)
-        # 平台数变化时，任务网络也重新初始化；仅动作维变化时，复制权重
+        # 平台数变化时，目标网络也重新初始化；仅动作维变化时，复制权重
         if n_platforms == current_n_platforms:
             self.system.masac.critic_target.load_state_dict(new_critic.state_dict())
 
@@ -2533,20 +2523,20 @@ class DynamicReallocator:
 
     def _reallocate_with_new_targets(self, new_targets: List[np.ndarray]) -> Dict[int, int]:
         """
-        处理新增任务的应急重分配 - 与坠毁场景类似，但所有平台可用
+        处理新增目标的应急重分配 - 与坠毁场景类似，但所有平台可用
 
         Args:
-            new_targets: 新增任务的位置列表（已由handle_emergency传入，环境已更新）
+            new_targets: 新增目标的位置列表（已由handle_emergency传入，环境已更新）
 
         Returns:
-            assignment: 平台到任务的分配字典
+            assignment: 平台到目标的分配字典
         """
         start_time = time.time()
 
-        # 新增任务场景：所有平台都可用（无需排除坠毁平台）
+        # 新增目标场景：所有平台都可用（无需排除坠毁平台）
         alive_platforms = list(range(len(self.env.platforms)))
 
-        print(f"   新增任务数: {len(new_targets)}，当前总任务数: {len(self.env.targets)}")
+        print(f"   新增目标数: {len(new_targets)}，当前总目标数: {len(self.env.targets)}")
         print(f"   存活平台: {len(alive_platforms)}个")
 
         # 阶段1：尝试快速微调（复用 crash 场景的逻辑）
@@ -2580,7 +2570,7 @@ class DynamicReallocator:
         self.fine_tuner.unfreeze_all()
 
         elapsed = time.time() - start_time
-        print(f"新增任务重构完成: 耗时{elapsed * 1000:.1f}ms，分配{len(best_assignment)}个任务")
+        print(f"新增目标重构完成: 耗时{elapsed * 1000:.1f}ms，分配{len(best_assignment)}个任务")
 
         # 验证结果（可选，调试用）
         if best_assignment:
@@ -2590,24 +2580,24 @@ class DynamicReallocator:
 
     def _reallocate_after_target_loss(self, lost_target_ids: List[int] = None) -> Dict[int, int]:
         """
-        处理任务丢失/减少后的应急重分配
+        处理目标丢失/减少后的应急重分配
 
         Args:
-            lost_target_ids: 丢失的任务ID列表（仅用于日志记录）
+            lost_target_ids: 丢失的目标ID列表（仅用于日志记录）
 
         Returns:
-            assignment: 平台到任务的分配字典
+            assignment: 平台到目标的分配字典
         """
         start_time = time.time()
 
-        # 任务丢失场景：所有平台都可用，但可用任务池减少了
+        # 目标丢失场景：所有平台都可用，但可用目标池减少了
         alive_platforms = list(range(len(self.env.platforms)))
 
         if lost_target_ids:
-            print(f"   标记为完成的任务: {lost_target_ids}")
+            print(f"   标记为完成的目标: {lost_target_ids}")
         print(f"   存活平台: {len(alive_platforms)}个")
         remaining = sum(1 for t in self.env.targets if not t.completed)
-        print(f"   剩余可用任务: {remaining}/{len(self.env.targets)}")
+        print(f"   剩余可用目标: {remaining}/{len(self.env.targets)}")
 
         # 阶段1：尝试快速微调（复用既有逻辑）
         self.fine_tuner.freeze_base_layers()
@@ -2639,7 +2629,7 @@ class DynamicReallocator:
         self.fine_tuner.unfreeze_all()
 
         elapsed = time.time() - start_time
-        print(f"任务丢失重构完成: 耗时{elapsed * 1000:.1f}ms，分配{len(best_assignment)}个任务")
+        print(f"目标丢失重构完成: 耗时{elapsed * 1000:.1f}ms，分配{len(best_assignment)}个任务")
 
         if best_assignment:
             self._validate_emergency_result(best_assignment)
@@ -2713,7 +2703,7 @@ class DynamicReallocator:
         """最终验证"""
         print(f"\n🔍 应急结果验证:")
         print(f"   ├─ 分配平台数: {len(assignment)}")
-        print(f"   ├─ 唯一任务数: {len(set(assignment.values()))}")
+        print(f"   ├─ 唯一目标数: {len(set(assignment.values()))}")
 
         # 检查时序
         violations = 0
@@ -2764,7 +2754,7 @@ class Trainer:
             'critic_losses': [],
             'actor_losses': [],
             'platform_coverage': [],  # 记录每回合的平台分配数
-            'target_coverage': [],  # 记录每回合的任务分配数
+            'target_coverage': [],  # 记录每回合的目标分配数
             'epsilons': [],  # 记录探索率变化
             'assignments_detail': [],  # 每回合的完整assignment字典
             'temporal_violations': [],  # 每回合的时序违反次数
@@ -2924,7 +2914,7 @@ class TerrainTrainer(Trainer):
         super().__init__()
         self.env = TerrainEnv(use_real_terrain=use_real_terrain)
 
-        # 关键修复：先加载场景配置，再创建TaskSystem，确保网络维度与实际任务数一致
+        # 关键修复：先加载场景配置，再创建TaskSystem，确保网络维度与实际目标数一致
         if platform_configs is not None and target_configs is not None:
             self.env.setup_scenario(platform_configs, target_configs)
 
@@ -2942,8 +2932,9 @@ class TerrainTrainer(Trainer):
         self.reward_window = deque(maxlen=self.window_size)  # 记录最近500回合的奖励
         self.recent_checkpoints = []  # 记录近期保存的检查点文件，用于清理
         self.best_composite_score = -1e10  # 新增：覆盖率优先的综合评分
+        print(f"当前配置: {config.N_PLATFORMS}平台, {config.N_TARGETS}目标")
         print("使用模式: 100km×100km纯模拟地形")
-
+        print("等待手动触发应急事件...")
 
     def _add_parameter_noise(self, scale=0.02):
         """
@@ -3027,12 +3018,15 @@ class TerrainTrainer(Trainer):
                 emergency_assignment = self.reallocator.handle_emergency(
                     'crash', {'platform_id': crash_id}
                 )
-
+                print(f"Episode {episode}: 模拟坠毁，重构分配完成")
 
     def train(self, episodes=2000):
         print(f"\n开始训练 {episodes} 个回合...")
         print(f"设备: {self.system.masac.device}")
         print(f"地图尺寸: {config.MAP_SIZE_X / 1000:.1f}km x {config.MAP_SIZE_Y / 1000:.1f}km")
+        print(f"模式: 手动触发应急事件（自动触发已禁用）")
+        print(f"当前固定配置: {config.N_PLATFORMS}平台, {config.N_TARGETS}目标")
+        print("等待手动触发应急事件...")
 
         self.explorer = AdaptiveExplorer(self.system.masac)
         collapse_recovery = 0
@@ -3107,9 +3101,9 @@ class TerrainTrainer(Trainer):
                     new_positions = event_data['targets']
                     n_new = len(new_positions)
                     print(
-                        f"事件: 新增{n_new}个临时任务（当前任务数: {len(self.env.targets)} → {len(self.env.targets) + n_new}）")
+                        f"事件: 新增{n_new}个临时目标（当前目标数: {len(self.env.targets)} → {len(self.env.targets) + n_new}）")
 
-                    # 添加新任务到环境
+                    # 添加新目标到环境
                     for i, pos in enumerate(new_positions):
                         new_id = len(self.env.targets)
                         # 生成简化的前序依赖（30%概率需要电子战支援）
@@ -3121,11 +3115,11 @@ class TerrainTrainer(Trainer):
                                 predecessors = random.sample(potential, min(1, len(potential)))
 
                         new_target = Target(new_id, pos, predecessors)
-                        # 确保新任务的任务类型随机但合理
+                        # 确保新目标的任务类型随机但合理
                         new_target.task_type = random.choice(['attack', 'reconnaissance', 'electronic'])
                         self.env.targets.append(new_target)
 
-                    # 调整网络维度适应新任务数
+                    # 调整网络维度适应新目标数
                     self.reallocator.fine_tuner.adapt_to_new_size(
                         len(self.env.platforms),
                         len(self.env.targets)
@@ -3318,13 +3312,13 @@ class TerrainTrainer(Trainer):
                 print(f"\n{'=' * 60}")
                 print(f"【回合 {episode + 1}/{episodes}】{eps_status} ε={self.system.masac.epsilon:.3f}")
                 print(f"  窗口平均奖励: {status.get('window_mean', 0):.3f} {plateau_info}")
-                print(f"  当前规模: {len(self.env.platforms)}平台 × {len(self.env.targets)}任务")
+                print(f"  当前规模: {len(self.env.platforms)}平台 × {len(self.env.targets)}目标")
                 coverage_info = "✅" if status.get('full_coverage') else "❌"
                 print(f"  分配覆盖: {status.get('n_platforms_assigned', 0)}/{config.N_PLATFORMS} {coverage_info}")
                 current_unique = len(set(tid for tids in temp_assignment.values()
                                          for tid in
                                          (tids if isinstance(tids, list) else [tids]))) if temp_assignment else 0
-                print(f"  任务分配: {current_unique}/{config.N_TARGETS} (窗口平均: {avg_unique_targets:.1f})")
+                print(f"  目标分配: {current_unique}/{config.N_TARGETS} (窗口平均: {avg_unique_targets:.1f})")
                 print(f"  历史最佳: {monitor.best_reward:.3f} @回合{monitor.best_episode}")
 
                 # 手动触发状态显示
@@ -3335,12 +3329,12 @@ class TerrainTrainer(Trainer):
                 print(f"  操作方式: 按键盘'E'键 或 创建文件'{self.manual_trigger.trigger_file}'")
 
                 if status['converged']:
-                    print(f" 检测到收敛平台期（但需手动触发应急事件）")
+                    print(f"  ⚠️ 检测到收敛平台期（但需手动触发应急事件）")
                 print(f"{'=' * 60}")
                 if len(self.history['rewards']) >= 40:
                     recent_std = np.std(self.history['rewards'][-40:])
                     if recent_std < 0.1:  # 40回合内标准差<0.1视为平台期
-                        print(f"检测到平台期（最近40回合标准差:{recent_std:.3f}）")
+                        print(f"⚠️ 警告：检测到平台期（最近40回合标准差:{recent_std:.3f}）")
                 # 定期生成详细报告（每500回合）
                 # 定期生成详细报告（每500回合）
                 if (episode + 1) % 500 == 0:
@@ -3381,12 +3375,12 @@ class TerrainTrainer(Trainer):
                     avg_targets = np.mean(eval_unique_targets)
                     avg_coverage = np.mean(eval_platform_coverage)
 
-                    # 综合评分：奖励为主，任务覆盖率为辅
-                    # 如果奖励相近，优先选择任务分配更多的模型
+                    # 综合评分：奖励为主，目标覆盖率为辅
+                    # 如果奖励相近，优先选择目标分配更多的模型
                     composite_score = avg_reward + (avg_targets / config.N_TARGETS) * 2.0
 
                     print(f"   评估结果: 奖励={avg_reward:.3f}±{std_reward:.3f}, "
-                          f"任务数={avg_targets:.1f}, 覆盖率={avg_coverage:.1f}")
+                          f"目标数={avg_targets:.1f}, 覆盖率={avg_coverage:.1f}")
                     print(f"   综合评分: {composite_score:.3f}")
 
                     # 2. 更新滑动窗口历史
@@ -3505,7 +3499,7 @@ class TerrainTrainer(Trainer):
                         window_targets = [r['avg_targets'] for r in self.reward_window]
                         print(f"\n📈 滑动窗口统计 (最近{len(self.reward_window)}回合):")
                         print(f"   ├─ 奖励范围: {min(window_rewards):.2f} ~ {max(window_rewards):.2f}")
-                        print(f"   ├─ 平均任务数: {np.mean(window_targets):.1f}/{config.N_TARGETS}")
+                        print(f"   ├─ 平均目标数: {np.mean(window_targets):.1f}/{config.N_TARGETS}")
                         print(f"   ├─ 窗口最佳回合: {window_best['episode']}")
                         print(f"   └─ 窗口最佳评分: {window_best['composite_score']:.2f}")
 
@@ -3529,6 +3523,8 @@ class TerrainTrainer(Trainer):
             print(f"\n🏆 训练结束，保存最终窗口最佳模型:")
             print(f"   来自回合: {self.recent_best_episode}")
             print(f"   评估奖励: {self.recent_best_reward:.3f}")
+            print(
+                f"   目标分配: {len(set(tid for tids in self.recent_best_assignment.values() for tid in tids)) if self.recent_best_assignment else 0}/{config.N_TARGETS}")
 
             # 创建一个指向最近最佳的快捷方式/副本
             latest_window = max(glob.glob('recent_best_ep*.pth'),
@@ -3561,7 +3557,7 @@ class TerrainTrainer(Trainer):
             reward = self.system.calc_reward(assignment)
             coverage = len(set(tid for tids in assignment.values() for tid in tids)) if assignment else 0
 
-            # 优先选覆盖任务多的；覆盖相同则选奖励高的
+            # 优先选覆盖目标多的；覆盖相同则选奖励高的
             if coverage > best_coverage or (coverage == best_coverage and reward > best_reward):
                 best_coverage = coverage
                 best_reward = reward
@@ -3570,7 +3566,20 @@ class TerrainTrainer(Trainer):
         # 用最好的结果输出
         coverage = len(best_final_assignment) if best_final_assignment else 0
         unique_targets = best_coverage
-        print(f"评估结果: {coverage}个平台有任务")
+        print(f"评估结果: {coverage}个平台有任务, 覆盖{unique_targets}/{len(self.env.targets)}个目标")
+
+        # 打印分配详情
+        for pid in range(len(self.env.platforms)):
+            if pid in best_final_assignment:
+                tids = best_final_assignment[pid]
+                if not isinstance(tids, list):
+                    tids = [tids]
+                for tid in tids:
+                    target = self.env.targets[tid]
+                    print(f"   P{pid}({self.env.platforms[pid].type}) → T{tid}({target.task_type})")
+            else:
+                print(f"   P{pid}({self.env.platforms[pid].type}) → [未分配]")
+        print(f"{'=' * 60}")
 
         # 生成图表（保持不变）
         total_episodes = len(self.history['assignments_detail'])
@@ -3644,7 +3653,7 @@ class TerrainTrainer(Trainer):
 
             # 标记全分配线
             ax2.axhline(y=config.N_PLATFORMS, color=colors['success'],
-                        linestyle='--', linewidth=2, label=f'任务: {config.N_PLATFORMS}平台')
+                        linestyle='--', linewidth=2, label=f'目标: {config.N_PLATFORMS}平台')
 
             # 标记当前值
             current_coverage = coverage[-1]
@@ -3658,7 +3667,7 @@ class TerrainTrainer(Trainer):
         ax2.legend(loc='lower right', fontsize=9)
         ax2.grid(True, alpha=0.3)
 
-        # ===== 子图3: 任务分配数 =====
+        # ===== 子图3: 目标分配数 =====
         ax3 = fig.add_subplot(gs[1, 1])
         target_cov = self.history['target_coverage']
 
@@ -3666,16 +3675,16 @@ class TerrainTrainer(Trainer):
             ax3.plot(target_cov, color=colors['secondary'], linewidth=1.5)
             ax3.fill_between(range(len(target_cov)), target_cov, alpha=0.3, color=colors['secondary'])
 
-            # 标记任务线
+            # 标记目标线
             ax3.axhline(y=config.N_TARGETS, color=colors['success'],
-                        linestyle='--', linewidth=2, label=f'任务: {config.N_TARGETS}任务')
+                        linestyle='--', linewidth=2, label=f'目标: {config.N_TARGETS}目标')
 
             current_t = target_cov[-1]
             ax3.scatter([len(target_cov) - 1], [current_t], color=colors['primary'], s=100, zorder=5)
 
         ax3.set_xlabel('回合数', fontsize=11)
-        ax3.set_ylabel('分配任务数', fontsize=11)
-        ax3.set_title('任务分配数量', fontsize=12, fontweight='bold')
+        ax3.set_ylabel('分配目标数', fontsize=11)
+        ax3.set_title('目标分配数量', fontsize=12, fontweight='bold')
         ax3.legend(loc='lower right', fontsize=9)
         ax3.grid(True, alpha=0.3)
 
@@ -3721,7 +3730,7 @@ class TerrainTrainer(Trainer):
             f"最近100回合统计:\n"
             f"• 平均奖励: {np.mean(rewards[-100:]):.3f}\n"
             f"• 平台覆盖: {np.mean(coverage[-100:]):.1f}/{config.N_PLATFORMS}\n"
-            f"• 任务分配: {np.mean(target_cov[-100:]):.1f}/{config.N_TARGETS}\n"
+            f"• 目标分配: {np.mean(target_cov[-100:]):.1f}/{config.N_TARGETS}\n"
             f"• 探索率(Epsilon): {self.history['epsilons'][-1]:.3f}\n"
             f"• 历史最佳: {monitor.best_reward:.3f} (回合{monitor.best_episode})"
         )
@@ -3794,323 +3803,160 @@ class TerrainTrainer(Trainer):
             # 如果绘图失败不影响训练
             pass
 
-    def visualize_3d(self, assignment: Dict[int, List[int]], filename: str = "assignment_3d_v4_fixed.png"):
-        """3D可视化 - 采用 assignment_provider.py 样式（左侧3D大图 + 右上任务序列 + 右下俯视图）"""
+    def visualize_3d(self, assignment: Dict[int, List[int]]):
+        """3D可视化 - 多任务版本"""
+        fig = plt.figure(figsize=(20, 16))
+        ax = fig.add_subplot(111, projection='3d')
 
-        # ---------- 构建地理任务映射（bibi.py 内部节点 → 地理任务）----------
-        agent_names = [f"agent_{pid}" for pid in range(len(self.env.platforms))]
+        # 设置背景
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('lightgray')
+        ax.yaxis.pane.set_edgecolor('lightgray')
+        ax.zaxis.pane.set_edgecolor('lightgray')
+        ax.xaxis.pane.set_alpha(0.1)
+        ax.yaxis.pane.set_alpha(0.1)
+        ax.zaxis.pane.set_alpha(0.1)
 
-        node_to_geo = {}
-        for geo_id, gt in enumerate(self.env.geo_targets):
-            for nid in gt['task_ids']:
-                node_to_geo[nid] = geo_id
+        # 绘制简化地形
+        try:
+            step = max(1, len(self.terrain.grid_lons) // 50)
+            lg, lt = np.meshgrid(self.terrain.grid_lons[::step], self.terrain.grid_lats[::step])
+            X, Y, Z = np.zeros_like(lg), np.zeros_like(lt), np.zeros_like(lg)
+            for i in range(lg.shape[0]):
+                for j in range(lg.shape[1]):
+                    local = self.terrain.geo2local(lg[i, j], lt[i, j])
+                    X[i, j], Y[i, j], Z[i, j] = local[0], local[1], local[2]
+            ax.plot_surface(X, Y, Z, cmap='terrain', alpha=0.3, rstride=1, cstride=1)
+        except Exception as e:
+            print(f"地形绘制警告: {e}")
 
-        geo_assignment = {}
-        for pid, node_ids in assignment.items():
-            if pid >= len(agent_names):
-                continue
-            agent_name = agent_names[pid]
-            seen = []
-            for nid in node_ids:
-                if nid in node_to_geo:
-                    gid = node_to_geo[nid]
-                    if gid not in seen:
-                        seen.append(gid)
-            geo_assignment[agent_name] = seen
-
-        # 地理任务统计
-        total_geo_tasks = sum(len(tids) for tids in geo_assignment.values())
-        unique_geo_tasks = len(set(tid for tids in geo_assignment.values() for tid in tids))
-        n_platforms_assigned = len([name for name, tids in geo_assignment.items() if len(tids) > 0])
-
-        # ========== 字体与配色 ==========
-        plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei',
-                                           'Noto Sans CJK SC', 'DejaVu Sans']
-        plt.rcParams['axes.unicode_minus'] = False
-
-        CMAP = {
-            '侦察': {
-                'plat': '#2980b9', 'tgt': '#3498db',
-                'line': '#5dade2', 'arr': '#1a5276',
-            },
-            '打击': {
-                'plat': '#d4ac0d', 'tgt': '#f1c40f',
-                'line': '#f4d03f', 'arr': '#9a7d0a',
-            },
-            '察打一体': {
-                'plat': '#c0392b', 'tgt': '#e74c3c',
-                'line': '#ec7063', 'arr': '#641e16',
-            }
-        }
-
-        # ========== 布局：左侧3D大图 | 右上序列 | 右下俯视 ==========
-        fig = plt.figure(figsize=(26, 14))
-        gs = GridSpec(2, 2, figure=fig, width_ratios=[3, 1.1],
-                      height_ratios=[1, 1], wspace=0.12, hspace=0.22)
-
-        ax = fig.add_subplot(gs[:, 0], projection='3d')  # 左侧占满2行
-        ax2 = fig.add_subplot(gs[0, 1])  # 右上：序列
-        ax3 = fig.add_subplot(gs[1, 1])  # 右下：俯视
-
-        assigned_set = set(tid for tids in assignment.values() for tid in tids)
-
-        # ==================== 左侧：3D场景 ====================
-        # 1. 简化地形
-        x_terrain = np.linspace(0, config.MAP_SIZE_X, 60)
-        y_terrain = np.linspace(0, config.MAP_SIZE_Y, 60)
-        X, Y = np.meshgrid(x_terrain, y_terrain)
-        Z = np.random.uniform(0, 30, X.shape)
-        ax.plot_surface(X, Y, Z, cmap='terrain', alpha=0.25,
-                        rstride=2, cstride=2, zorder=1, linewidth=0)
-
-        # 2. 威胁区域
+        # 绘制威胁区域
         for threat in self.env.threats:
-            u = np.linspace(0, 2 * np.pi, 40)
-            v = np.linspace(0, np.pi / 2, 20)
+            if threat.type == 'radar':
+                color, alpha = '#ff4444', 0.08
+            else:
+                color, alpha = '#888888', 0.12
+
+            u = np.linspace(0, 2 * np.pi, 30)
+            v = np.linspace(0, np.pi / 2, 15)
             x = threat.center[0] + threat.radius * np.outer(np.cos(u), np.sin(v))
             y = threat.center[1] + threat.radius * np.outer(np.sin(u), np.sin(v))
-            z = 0 + threat.radius * np.outer(np.ones(np.size(u)), np.cos(v))
-            ax.plot_surface(x, y, z, color='red', alpha=0.12,
-                            rstride=2, cstride=2, zorder=2, linewidth=0)
-            theta = np.linspace(0, 2 * np.pi, 100)
-            ax.plot(threat.center[0] + threat.radius * np.cos(theta),
-                    threat.center[1] + threat.radius * np.sin(theta),
-                    np.zeros_like(theta), color='red', alpha=0.6,
-                    linewidth=0.5, zorder=3)
+            z = threat.center[2] + threat.radius * np.outer(np.ones(np.size(u)), np.cos(v))
+            ax.plot_surface(x, y, z, alpha=alpha, color=color, rstride=2, cstride=2)
 
-        # 3. 平台
+        # 绘制平台
         for p in self.env.platforms:
-            c = CMAP.get(p.type, CMAP['侦察'])
-            agent_name = agent_names[p.id] if p.id < len(agent_names) else f"agent_{p.id}"
-            n_tasks = len(geo_assignment.get(agent_name, []))
-            ax.scatter(*p.position, c=c['plat'], marker='o', s=500,
-                       edgecolors='black', linewidth=2, alpha=0.95, zorder=10)
+            color = Platform.COLORS.get(p.type, 'blue')
+            ax.scatter(*p.position, c=color, marker='o', s=400,
+                       edgecolors='black', linewidth=2.5, alpha=0.95, zorder=10)
+
+            n_tasks = len(assignment.get(p.id, []))  # ← 获取任务数
+            label = f'P{p.id}\n({n_tasks}tasks)'  # ← 显示任务数
             ax.text(p.position[0], p.position[1], p.position[2] + 8000,
-                    f'P{p.id}({p.type})\n{n_tasks}tasks',
-                    fontsize=9, fontweight='bold', zorder=15,
+                    label, fontsize=10, fontweight='bold', zorder=15,
                     bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                              edgecolor=c['plat'], alpha=0.9, linewidth=2))
+                              edgecolor=color, alpha=0.9))
 
-        # 4. 任务（标注改为地理任务编号，同一位置只标一次）
-        annotated_geo_3d = set()
+        # 绘制目标
         for t in self.env.targets:
-            if t.id in assigned_set:
-                c = CMAP.get(t.task_type, CMAP['侦察'])
-                alpha, size = 0.95, 250 + int(t.value * 250)
-            else:
-                c = {'tgt': '#bbbbbb'}
-                alpha, size = 0.35, 150
+            color = Target.COLORS.get(t.task_type, 'gray')
             marker = Target.MARKERS.get(t.task_type, 'o')
-            ax.scatter(*t.position, c=c['tgt'], marker=marker, s=size,
-                       edgecolors='black', linewidth=1.5, alpha=alpha, zorder=10)
+            size = 200 + int(t.value * 200)
+            ax.scatter(*t.position, c=color, marker=marker, s=size,
+                       edgecolors='black', linewidth=2, alpha=0.9, zorder=10)
+            ax.text(t.position[0], t.position[1], t.position[2] + 5000,
+                    f'T{t.id}', fontsize=10, fontweight='bold', zorder=15,
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white',
+                              edgecolor=color, alpha=0.8))
 
-            if t.id in node_to_geo:
-                geo_id = node_to_geo[t.id]
-                if geo_id not in annotated_geo_3d:
-                    ax.text(t.position[0], t.position[1], t.position[2] + 5000,
-                            f'Task{geo_id + 1:02d}', fontsize=9, fontweight='bold', zorder=15,
-                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white',
-                                      edgecolor=c['tgt'], alpha=0.8, linewidth=1.5))
-                    annotated_geo_3d.add(geo_id)
+        for t in self.env.targets:
+            if t.predecessors:
+                for pred_id in t.predecessors:
+                    if pred_id < len(self.env.targets):
+                        pred_pos = self.env.targets[pred_id].position
+                        curr_pos = t.position
+                        # 绘制从目标指向其前序任务的虚线（表示依赖关系）
+                        ax.plot([curr_pos[0], pred_pos[0]],
+                                [curr_pos[1], pred_pos[1]],
+                                [curr_pos[2], pred_pos[2]],
+                                'g--', linewidth=1.5, alpha=0.5, zorder=3)
 
-        # 5. 分配路径
-        for pid, tids in assignment.items():
+        # 绘制分配连线
+        for pid, tids in assignment.items():  # ← 遍历目标列表
             if pid >= len(self.env.platforms):
                 continue
             p = self.env.platforms[pid]
-            prev_pos = p.position.copy()
-            for idx, tid in enumerate(tids):
+
+            prev_pos = p.position  # 从平台位置开始
+            for idx, tid in enumerate(tids):  # ← 遍历多个任务
                 if tid >= len(self.env.targets):
                     continue
                 t = self.env.targets[tid]
-                c = CMAP.get(t.task_type, CMAP['侦察'])
-                lw, ls = (3.5, '-') if idx == 0 else (2.5, '--')
+
+                # 绘制连线（从上一位置到当前目标）
                 ax.plot([prev_pos[0], t.position[0]],
                         [prev_pos[1], t.position[1]],
                         [prev_pos[2], t.position[2]],
-                        color=c['line'], linewidth=lw, linestyle=ls,
-                        alpha=0.85, zorder=5)
+                        'k-', linewidth=2, alpha=0.6, zorder=5)
+
+                # 绘制箭头
                 mid = (prev_pos + t.position) / 2
                 direction = (t.position - prev_pos)
-                norm = np.linalg.norm(direction) + 1e-6
-                direction = direction / norm * 6000
+                direction = direction / (np.linalg.norm(direction) + 1e-6) * 5000
                 ax.quiver(mid[0], mid[1], mid[2],
                           direction[0], direction[1], direction[2],
-                          color=c['arr'], arrow_length_ratio=0.35,
-                          linewidth=2.5, zorder=8)
-                prev_pos = t.position.copy()
+                          color='darkred', arrow_length_ratio=0.3, linewidth=2, zorder=8)
 
-        # 6. 3D坐标轴与标题
+                prev_pos = t.position  # ← 更新位置，准备绘制下一段
+                direction = direction / (np.linalg.norm(direction) + 1e-6) * 8000
+                ax.quiver(mid[0], mid[1], mid[2],
+                          direction[0], direction[1], direction[2],
+                          color='darkred', arrow_length_ratio=0.4, linewidth=3, zorder=8)
+
+        # 设置坐标轴
         ax.set_xlim(0, config.MAP_SIZE_X)
         ax.set_ylim(0, config.MAP_SIZE_Y)
         ax.set_zlim(0, config.MAP_HEIGHT)
-        ax.set_xlabel('X (m)', fontsize=11)
-        ax.set_ylabel('Y (m)', fontsize=11)
-        ax.set_zlabel('Z (m)', fontsize=11)
+        ax.set_xlabel('X (m)', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Y (m)', fontsize=14, fontweight='bold')
+        ax.set_zlabel('Z (m)', fontsize=14, fontweight='bold')
 
-        ax.set_title(f'智能空面协同任务分配 - 3D场景\n'
-                     f'平台:{n_platforms_assigned} | 任务:{total_geo_tasks} | '
-                     f'任务:{unique_geo_tasks}/{len(self.env.geo_targets)}',
-                     fontsize=13, fontweight='bold', pad=15)
+        # 标题
+        avg_time = np.mean(self.system.stats['times']) * 1000 if self.system.stats['times'] else 0
+        total_tasks = sum(len(tids) for tids in assignment.values())
+        unique_tasks = len(set(tid for tids in assignment.values() for tid in tids))
 
+        title = (f'智能空面协同任务分配 - 多任务模式\n'
+                 f'平台数: {len(assignment)} | 总分配: {total_tasks} | 唯一目标: {unique_tasks}/{config.N_TARGETS}')
+        ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+
+        # 图例
         legend_elements = [
-            Line2D([0], [0], marker='o', color='w',
-                   markerfacecolor=CMAP['侦察']['plat'], markersize=11,
-                   label='侦察平台', markeredgecolor='black'),
-            Line2D([0], [0], marker='o', color='w',
-                   markerfacecolor=CMAP['打击']['plat'], markersize=11,
-                   label='打击平台', markeredgecolor='black'),
-            Line2D([0], [0], marker='o', color='w',
-                   markerfacecolor=CMAP['察打一体']['plat'], markersize=11,
-                   label='察打一体平台', markeredgecolor='black'),
-            Line2D([0], [0], marker='s', color='w',
-                   markerfacecolor=CMAP['侦察']['tgt'], markersize=11,
-                   label='侦察任务', markeredgecolor='black'),
-            Line2D([0], [0], marker='^', color='w',
-                   markerfacecolor=CMAP['打击']['tgt'], markersize=11,
-                   label='打击任务', markeredgecolor='black'),
-            Line2D([0], [0], color=CMAP['侦察']['line'], lw=3, label='侦察路径'),
-            Line2D([0], [0], color=CMAP['打击']['line'], lw=3, label='打击路径'),
-            Line2D([0], [0], color=CMAP['察打一体']['line'], lw=3, label='察打一体路径'),
-            Line2D([0], [0], color='red', lw=0, marker='o', markersize=10,
-                   markerfacecolor='red', alpha=0.3, label='威胁区域'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=Platform.COLORS['侦察'],
+                   markersize=12, label='侦察 (UAV)', markeredgecolor='black'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=Platform.COLORS['察打一体'],
+                   markersize=12, label='察打一体 (UCAV)', markeredgecolor='black'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=Platform.COLORS['打击'],
+                   markersize=12, label='打击 (USV)', markeredgecolor='black'),
+            Line2D([0], [0], marker='^', color='w', markerfacecolor=Target.COLORS['打击'],
+                   markersize=12, label='打击目标', markeredgecolor='black'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=Target.COLORS['侦察'],
+                   markersize=12, label='侦察目标', markeredgecolor='black'),
+            Line2D([0], [0], marker='d', color='w', markerfacecolor=Target.COLORS['察打一体'],
+                   markersize=12, label='察打一体目标', markeredgecolor='black'),
+            Line2D([0], [0], color='red', lw=3, alpha=0.3, label='威胁区域'),
+            Line2D([0], [0], color='black', lw=2, label='分配路径'),
         ]
-        ax.legend(handles=legend_elements, loc='upper left',
-                  bbox_to_anchor=(1.02, 1), fontsize=9)
-        ax.view_init(elev=30, azim=50)
+        ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1), fontsize=11)
+        ax.view_init(elev=25, azim=45)
 
-        # ==================== 右上：任务序列面板 ====================
-        ax2.set_xlim(0, 1)
-        ax2.set_ylim(0, 1)
-        ax2.axis('off')
-
-        lines = []
-        lines.append("【任务分配序列表】")
-        lines.append("=" * 58)
-        lines.append(f"{'平台':<8} {'类型':<6} {'任务链'}")
-        lines.append("-" * 58)
-
-        env_pid_to_name = {i: agent_names[i] for i in range(len(agent_names))}
-
-        for agent_name in sorted(geo_assignment.keys()):
-            p = None
-            for plat in self.env.platforms:
-                if env_pid_to_name.get(plat.id) == agent_name:
-                    p = plat
-                    break
-            if p is None:
-                continue
-
-            geo_tids = geo_assignment[agent_name]
-            if not geo_tids:
-                continue
-            task_chain = []
-            for geo_tid in geo_tids:
-                if 0 <= geo_tid < len(self.env.geo_targets):
-                    gt = self.env.geo_targets[geo_tid]
-                    task_chain.append(f"task_{geo_tid + 1:02d}({gt['type']})")
-            chain_str = " → ".join(task_chain)
-            lines.append(f"{agent_name:<10} {p.type:<6} {chain_str}")
-
-        lines.append("=" * 58)
-        all_geo = set(range(len(self.env.geo_targets)))
-        assigned_geo = set(tid for tids in geo_assignment.values() for tid in tids)
-        unassigned_geo = sorted(all_geo - assigned_geo)
-        if unassigned_geo:
-            lines.append(f"\n⚠️ 未分配: {[f'task_{t + 1:02d}' for t in unassigned_geo]}")
-        else:
-            lines.append(f"\n✅ 全部 {len(self.env.geo_targets)} 个任务已分配")
-
-        ax2.text(0.05, 0.98, "\n".join(lines), transform=ax2.transAxes,
-                 fontsize=9, verticalalignment='top',
-                 bbox=dict(boxstyle='round,pad=0.8', facecolor='#f8f9fa',
-                           edgecolor='#2c3e50', linewidth=2, alpha=0.95))
-        ax2.set_title("任务序列", fontsize=12, fontweight='bold', pad=10)
-
-        # ==================== 右下：Z轴俯视图（X-Y平面） ====================
-        for p in self.env.platforms:
-            c = CMAP.get(p.type, CMAP['侦察'])
-            ax3.scatter(p.position[0], p.position[1], c=c['plat'], marker='o',
-                        s=300, edgecolors='black', linewidth=1.5, alpha=0.9, zorder=10)
-            ax3.annotate(f'P{p.id}', (p.position[0], p.position[1]),
-                         textcoords="offset points", xytext=(8, 8),
-                         fontsize=9, fontweight='bold', color=c['plat'])
-
-        annotated_geo_top = set()
-        for t in self.env.targets:
-            if t.id in assigned_set:
-                c = CMAP.get(t.task_type, CMAP['侦察'])
-                alpha, size = 0.9, 180 + int(t.value * 180)
-            else:
-                c = {'tgt': '#bbbbbb'}
-                alpha, size = 0.35, 100
-            marker = Target.MARKERS.get(t.task_type, 'o')
-            ax3.scatter(t.position[0], t.position[1], c=c['tgt'], marker=marker,
-                        s=size, edgecolors='black', linewidth=1.2, alpha=alpha, zorder=9)
-
-            if t.id in node_to_geo:
-                geo_id = node_to_geo[t.id]
-                if geo_id not in annotated_geo_top:
-                    ax3.annotate(f'Task{geo_id + 1:02d}', (t.position[0], t.position[1]),
-                                 textcoords="offset points", xytext=(-12, -12),
-                                 fontsize=8, color='#333333')
-                    annotated_geo_top.add(geo_id)
-
-        for pid, tids in assignment.items():
-            if pid >= len(self.env.platforms):
-                continue
-            p = self.env.platforms[pid]
-            prev_pos = p.position.copy()
-            for idx, tid in enumerate(tids):
-                if tid >= len(self.env.targets):
-                    continue
-                t = self.env.targets[tid]
-                c = CMAP.get(t.task_type, CMAP['侦察'])
-                lw, ls = (2.5, '-') if idx == 0 else (1.8, '--')
-                ax3.plot([prev_pos[0], t.position[0]],
-                         [prev_pos[1], t.position[1]],
-                         color=c['line'], linewidth=lw, linestyle=ls,
-                         alpha=0.8, zorder=5)
-                mid_x = (prev_pos[0] + t.position[0]) / 2
-                mid_y = (prev_pos[1] + t.position[1]) / 2
-                dx = t.position[0] - prev_pos[0]
-                dy = t.position[1] - prev_pos[1]
-                norm = np.linalg.norm([dx, dy]) + 1e-6
-                dx, dy = dx / norm * 4000, dy / norm * 4000
-                ax3.annotate('', xy=(mid_x + dx * 0.5, mid_y + dy * 0.5),
-                             xytext=(mid_x - dx * 0.5, mid_y - dy * 0.5),
-                             arrowprops=dict(arrowstyle='->', color=c['arr'],
-                                             lw=2), zorder=8)
-                prev_pos = t.position.copy()
-
-        for threat in self.env.threats:
-            circle = plt.Circle((threat.center[0], threat.center[1]),
-                                threat.radius, color='red', alpha=0.22, zorder=2)
-            ax3.add_patch(circle)
-
-        margin = max([t.radius for t in self.env.threats] + [0]) * 1.5
-        ax3.set_xlim(-margin, config.MAP_SIZE_X + margin)
-        ax3.set_ylim(-margin, config.MAP_SIZE_Y + margin)
-        ax3.set_xlabel('X (m)', fontsize=11)
-        ax3.set_ylabel('Y (m)', fontsize=11)
-        ax3.set_title("俯视图（Z轴方向）", fontsize=12, fontweight='bold', pad=10)
-        ax3.grid(True, alpha=0.3)
-
-        top_legend = [
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=CMAP['侦察']['plat'],
-                   markersize=9, label='侦察', markeredgecolor='black'),
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=CMAP['打击']['plat'],
-                   markersize=9, label='打击', markeredgecolor='black'),
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=CMAP['察打一体']['plat'],
-                   markersize=9, label='察打一体', markeredgecolor='black'),
-            Line2D([0], [0], color='red', lw=0, marker='o', markersize=8,
-                   markerfacecolor='red', alpha=0.3, label='威胁区'),
-        ]
-        ax3.legend(handles=top_legend, loc='upper right', fontsize=8)
-
-        plt.savefig(filename, dpi=200, bbox_inches='tight')
-        plt.close(fig)
-        print(f"Saved: {filename}")
+        plt.tight_layout()
+        plt.savefig('assignment_3d_v4_fixed.png', dpi=300, bbox_inches='tight')
+        print("Saved: assignment_3d_v4_fixed.png")
+        plt.show()
+        plt.close(fig)  # 关键：释放内存，防止泄漏
 
     def _plot_temporal_dependencies_simple(self, assignment: Dict[int, int], episode: int):
         """
@@ -4119,6 +3965,10 @@ class TerrainTrainer(Trainer):
         """
         import matplotlib.pyplot as plt
         import matplotlib.patches as mpatches
+
+        if not assignment:
+            print("⚠️ 无分配数据，跳过时序依赖图")
+            return
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
@@ -4241,7 +4091,7 @@ class TerrainTrainer(Trainer):
 
         # 标题和图例
         ax.set_title(f'任务时序依赖验证图 (回合 {episode})\n'
-                     f'共分配{len(assignment)}个平台→{len(set(assigned_targets))}个唯一任务 | '
+                     f'共分配{len(assignment)}个平台→{len(set(assigned_targets))}个唯一目标 | '
                      f'连线表示"必须在...之前完成"',
                      fontsize=14, fontweight='bold', pad=20)
 
@@ -4271,7 +4121,7 @@ class TerrainTrainer(Trainer):
                       f'• 总约束数: {total_constraints}\n'
                       f'• 已满足: {satisfied_count}\n'
                       f'• 满足率: {satisfaction_rate:.1%}\n'
-                      f'• 分配方案: {len(assignment)}平台/{len(set(assigned_targets))}任务')
+                      f'• 分配方案: {len(assignment)}平台/{len(set(assigned_targets))}目标')
 
         ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10,
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
@@ -4293,6 +4143,10 @@ class TerrainTrainer(Trainer):
         # 获取最近的数据
         start_idx = max(0, len(self.history['assignments_detail']) - recent_episodes)
         end_idx = len(self.history['assignments_detail'])
+
+        if start_idx >= end_idx:
+            print("数据不足，无法生成甘特图")
+            return
 
         recent_assignments = self.history['assignments_detail'][start_idx:end_idx]
         episodes_range = list(range(start_idx, end_idx))

@@ -2019,10 +2019,29 @@ def sample_task_points(env, count, existing_positions=None):    # 采样任务�
 
 
 def build_tasks_from_specs(task_points, task_specs):   # 
+    task_point_lookup = {}
+    if isinstance(task_points, dict):
+        task_point_lookup = {
+            str(task_id): np.asarray(point, dtype=np.float32).copy()
+            for task_id, point in task_points.items()
+        }
+    else:
+        task_point_lookup = {
+            _task_id_from_index(idx): np.asarray(point, dtype=np.float32).copy()
+            for idx, point in enumerate(task_points or [])
+        }
+
     tasks = {}
     for idx, spec in enumerate(task_specs):
         task_id = str(spec["task_id"])
-        task_position = np.asarray(task_points[idx], dtype=np.float32)
+        task_position = task_point_lookup.get(task_id)
+        if task_position is None:
+            if idx < len(task_point_lookup):
+                fallback_task_id = _task_id_from_index(idx)
+                task_position = task_point_lookup.get(fallback_task_id)
+        if task_position is None:
+            raise KeyError(f"未找到任务 {task_id} 对应的位置，无法构建任务字典。")
+        task_position = np.asarray(task_position, dtype=np.float32).copy()
         task_position[2] = float(np.clip(task_position[2], 0.0, 3.0))
         slot_positions = spec.get("slot_positions")
         normalized_slot_positions = None
@@ -2437,6 +2456,7 @@ def _set_collab_orbit_target(env, state, task_id, agent, step_completed=None):
     state.setdefault("global_plan_smoothed_subgoals", {})[agent] = orbit_target.copy()
     state.setdefault("global_plan_completed", {})[agent] = True
     state.setdefault("global_plan_status", {})[agent] = "collab_orbit"
+    state.setdefault("collab_orbiting_agents", set()).add(str(agent))
 
 
 def build_render_task_paths(state): # 构建渲染任务路径
@@ -3087,9 +3107,13 @@ def promote_collaborative_completed_tasks(env, state):
                 arrived_agents.append(agent)
         _set_collab_arrived_agents(state, task_id, arrived_agents)
 
-        if len(assigned_agents) > 1 and len(arrived_agents) < len(assigned_agents):
+        if len(assigned_agents) > 1 and arrived_agents and len(arrived_agents) < len(assigned_agents):
             for agent in arrived_agents:
                 _set_collab_orbit_target(env, state, task_id, agent, step_completed=step_completed)
+
+        if len(assigned_agents) > 1 and len(arrived_agents) < len(assigned_agents):
+            if set(current_agents) != set(assigned_agents):
+                continue
             continue
 
         if any(agent not in arrived_agents for agent in assigned_agents):
@@ -3099,6 +3123,7 @@ def promote_collaborative_completed_tasks(env, state):
         completed_now.append(task_id)
         _set_collab_arrived_agents(state, task_id, [])
         for agent in assigned_agents:
+            state.setdefault("collab_orbiting_agents", set()).discard(str(agent))
             queue = state["agent_queues"].get(agent, [])
             if queue and queue[0] == task_id:
                 queue.pop(0)

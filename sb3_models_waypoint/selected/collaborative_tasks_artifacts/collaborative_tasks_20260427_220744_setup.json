@@ -1,0 +1,1367 @@
+{
+  "run_name": "collaborative_tasks_20260427_220744",
+  "scenario_name": "collaborative_tasks",
+  "model_path": ".\\sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+  "geo_origin": {
+    "origin_lat": 31.95,
+    "origin_lon": 118.85
+  },
+  "terrain": {
+    "type": "CSVTerrainMap",
+    "csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "target_extent": [
+      100.0,
+      100.0
+    ],
+    "target_height": 100.0,
+    "resolution": 1.0,
+    "origin": [
+      0.0,
+      0.0
+    ]
+  },
+  "space_dim": [
+    100.0,
+    100.0,
+    15.0
+  ],
+  "obstacle_rule": "hybrid",
+  "obstacles": [
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 44.0,
+      "y": 18.0,
+      "z": 0.09731148928403854,
+      "radius": 5.090047219508938,
+      "height": 9.082190356684732
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 42.0,
+      "y": 50.0,
+      "z": 0.09430568665266037,
+      "radius": 5.224477518067941,
+      "height": 5.090795602617024
+    },
+    {
+      "kind": "cylinder",
+      "type": "CylinderObstacle",
+      "x": 60.0,
+      "y": 76.0,
+      "radius": 8.007045625428866,
+      "height": 9.742380631701073
+    },
+    {
+      "kind": "hemisphere",
+      "type": "EllipsoidalHemisphereObstacle",
+      "x": 78.0,
+      "y": 30.0,
+      "z": 0.09247885644435883,
+      "radius": 8.729976055098616,
+      "height": 5.916595510720014
+    },
+    {
+      "kind": "cylinder",
+      "type": "CylinderObstacle",
+      "x": 80.0,
+      "y": 64.0,
+      "radius": 9.638506048610946,
+      "height": 5.032952562947458
+    }
+  ],
+  "args": {
+    "seed": 7,
+    "config_json": "",
+    "model_root": "./sb3_models_waypoint",
+    "run_id": "",
+    "eval_model_path": ".\\sb3_models_waypoint\\selected\\uav_waypoint_ppo_2600000_steps.zip",
+    "use_global_planner": true,
+    "global_planner_model_root": "./sb3_models_waypoint",
+    "global_planner_run_id": "",
+    "global_planner_model_path": ".\\sb3_models_waypoint\\model\\best_model.zip",
+    "global_planner_max_steps": 24,
+    "global_planner_waypoint_stride": 1,
+    "global_fallback_max_steps": 5,
+    "assignment_provider_module": "assignment_provider.py",
+    "assignment_provider_callable": "assignment_provider",
+    "assignment_provider_model_path": "",
+    "assignment_provider_device": "cpu",
+    "device": "cpu",
+    "output_dir": "",
+    "save_artifacts": true,
+    "render": false,
+    "eval_render_mode": false,
+    "eval_pause": 0.03,
+    "eval_render_every": 5,
+    "eval_capture_every": 5,
+    "eval_gif_fps": 10,
+    "eval_history_stride": 3,
+    "eval_history_smooth_window": 5,
+    "eval_terrain_stride": 2,
+    "n_agents": 10,
+    "active_n_agents": 0,
+    "task_count": 16,
+    "max_steps": 120,
+    "assignment_json": "",
+    "scenario_json": "Configs\\fixed_task_scenarios\\scenario_test_line.json",
+    "space_x": 100.0,
+    "space_y": 100.0,
+    "space_z": 15.0,
+    "origin_lat": 31.95,
+    "origin_lon": 118.85,
+    "terrain_enabled": true,
+    "terrain_source": "csv",
+    "terrain_csv_path": "Envs\\jiangning_mountain_simplified_smoother.csv",
+    "terrain_csv_target_x": 100.0,
+    "terrain_csv_target_y": 100.0,
+    "terrain_csv_target_z": 100.0,
+    "terrain_csv_z_scale": 0.001,
+    "terrain_grid_resolution": 1.0,
+    "terrain_min_clearance": 0.2,
+    "terrain_max_clearance": 1.0,
+    "terrain_match_space_dim": true,
+    "terrain_spawn_clearance": 0.1,
+    "global_waypoint_switch_threshold": 1.5,
+    "global_waypoint_relaxed_threshold": 1.8,
+    "global_waypoint_stagnation_steps": 10,
+    "global_waypoint_skip_steps": 30,
+    "global_waypoint_progress_reset_threshold": 0.02,
+    "global_waypoint_jitter_tolerance": 0.01,
+    "global_waypoint_hold_steps": 3,
+    "global_waypoint_cooldown_steps": 4,
+    "global_waypoint_smoothing_alpha": 0.25,
+    "global_segment_lookahead_distance": 1.5,
+    "global_segment_min_progress_ratio": 0.2,
+    "eval_turn_limit_deg": 35.0,
+    "spawn_max_height": 30.0,
+    "ground_target_clearance": 0.2,
+    "obstacle_rule": "hybrid",
+    "num_obstacles": 0,
+    "scenario_obstacle_count": 6,
+    "terrain_num_hemispheres": 0,
+    "terrain_radius_min": 5.0,
+    "terrain_radius_max": 10.0,
+    "terrain_height_min": 5.0,
+    "terrain_height_max": 10.0,
+    "lowland_height_threshold": 10.0,
+    "lowland_cylinder_radius_min": 5.0,
+    "lowland_cylinder_radius_max": 10.0,
+    "lowland_cylinder_height_min": 5.0,
+    "lowland_cylinder_height_max": 10.0,
+    "spawn_min_height_buffer": 8.0,
+    "task_min_obstacle_clearance": 10.0,
+    "obstacle_min_spacing": 12.0,
+    "uav_speed": 0.06,
+    "decision_period": 1.0,
+    "lidar_rays": 24,
+    "lidar_range": 0.6,
+    "goal_threshold": 1.0,
+    "collab_slot_obstacle_buffer": 2.0,
+    "step_penalty": -0.01,
+    "progress_reward_scale": 2.0,
+    "obstacle_collision_penalty": 80.0,
+    "agent_collision_penalty": 160.0,
+    "goal_reward": 1500.0,
+    "timeout_penalty_scale": 40.0,
+    "collision_radius": 0.02,
+    "hemisphere_exclusion_buffer": 5.0,
+    "avoid_mountain_basins": true,
+    "basin_window_radius": 4,
+    "basin_highland_threshold": 20.0,
+    "basin_relief_threshold": 3.0,
+    "basin_high_neighbor_ratio": 0.35
+  },
+  "scenario_state": {
+    "task_count": 16,
+    "inactive_agents": [],
+    "event_log": [
+      "加载全局规划模型: .\\sb3_models_waypoint\\model\\best_model.zip",
+      "检测到任务目标变化，重新生成全局路点",
+      "开始全局预规划，active agent 数=10 / model slots=10",
+      "全局规划策略决策耗时: total=47.961 ms, avg=0.200 ms/decision, count=240",
+      "全局预规划完成"
+    ],
+    "tasks": {
+      "task_03": {
+        "position": [
+          15.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            15.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.00880383508593,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_03",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_0": [
+            15.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_0": {
+            "enu_km": [
+              15.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.00880383508593,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_02": {
+        "position": [
+          10.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            10.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 118.95586922339062,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_0"
+        ],
+        "label": "task_02",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_0": [
+            10.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_0": {
+            "enu_km": [
+              10.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 118.95586922339062,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_15": {
+        "position": [
+          35.0,
+          85.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            35.0,
+            85.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.713564498742365,
+          "longitude": 119.22054228186717,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_0",
+          "agent_4"
+        ],
+        "label": "task_15",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_0": [
+            35.42331314086914,
+            86.04232025146484,
+            0.20000000298023224
+          ],
+          "agent_4": [
+            34.57668685913086,
+            83.95767974853516,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_0": {
+            "enu_km": [
+              35.42331314086914,
+              86.04232025146484,
+              0.20000000298023224
+            ],
+            "latitude": 32.722927778040464,
+            "longitude": 119.22502386521465,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_4": {
+            "enu_km": [
+              34.57668685913086,
+              83.95767974853516,
+              0.20000000298023224
+            ],
+            "latitude": 32.70420121944426,
+            "longitude": 119.21606069851968,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_01": {
+        "position": [
+          5.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            5.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 118.9029346116953,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_01",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_1": [
+            5.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_1": {
+            "enu_km": [
+              5.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 118.9029346116953,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_04": {
+        "position": [
+          20.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            20.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.06173844678123,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_04",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_1": [
+            20.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_1": {
+            "enu_km": [
+              20.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.06173844678123,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_05": {
+        "position": [
+          30.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            30.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.16760767017186,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_1"
+        ],
+        "label": "task_05",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_1": [
+            30.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_1": {
+            "enu_km": [
+              30.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.16760767017186,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_16": {
+        "position": [
+          65.0,
+          85.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            65.0,
+            85.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.713564498742365,
+          "longitude": 119.53814995203903,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_2",
+          "agent_4"
+        ],
+        "label": "task_16",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_2": [
+            65.98392486572266,
+            84.45455932617188,
+            0.20000000298023224
+          ],
+          "agent_4": [
+            64.01607513427734,
+            85.54544067382812,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_2": {
+            "enu_km": [
+              65.98392486572266,
+              84.45455932617188,
+              0.20000000298023224
+            ],
+            "latitude": 32.70866474421642,
+            "longitude": 119.54856668817992,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_4": {
+            "enu_km": [
+              64.01607513427734,
+              85.54544067382812,
+              0.20000000298023224
+            ],
+            "latitude": 32.71846425326831,
+            "longitude": 119.52773321589817,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_06": {
+        "position": [
+          40.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            40.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.27347689356249,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_2"
+        ],
+        "label": "task_06",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_2": [
+            40.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_2": {
+            "enu_km": [
+              40.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.27347689356249,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_12": {
+        "position": [
+          85.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            85.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.74988839882029,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_2",
+          "agent_3"
+        ],
+        "label": "task_12",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_2": [
+            86.10066986083984,
+            89.76729583740234,
+            0.20000000298023224
+          ],
+          "agent_3": [
+            83.89933013916016,
+            90.23270416259766,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_2": {
+            "enu_km": [
+              86.10066986083984,
+              89.76729583740234,
+              0.20000000298023224
+            ],
+            "latitude": 32.75638964999463,
+            "longitude": 119.76154110515795,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_3": {
+            "enu_km": [
+              83.89933013916016,
+              90.23270416259766,
+              0.20000000298023224
+            ],
+            "latitude": 32.7605704649892,
+            "longitude": 119.73823569248262,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_11": {
+        "position": [
+          80.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            80.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.69695378712497,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_3",
+          "agent_9"
+        ],
+        "label": "task_11",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_3": [
+            80.65538024902344,
+            89.08561706542969,
+            0.20000000298023224
+          ],
+          "agent_9": [
+            79.34461975097656,
+            90.91438293457031,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_3": {
+            "enu_km": [
+              80.65538024902344,
+              89.08561706542969,
+              0.20000000298023224
+            ],
+            "latitude": 32.75026605340846,
+            "longitude": 119.70389224692394,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_9": {
+            "enu_km": [
+              79.34461975097656,
+              90.91438293457031,
+              0.20000000298023224
+            ],
+            "latitude": 32.76669406157537,
+            "longitude": 119.69001532732601,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_10": {
+        "position": [
+          75.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            75.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.64401917542966,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_3",
+          "agent_8"
+        ],
+        "label": "task_10",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_3": [
+            75.76408386230469,
+            89.17428588867188,
+            0.20000000298023224
+          ],
+          "agent_8": [
+            74.23591613769531,
+            90.82571411132812,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_3": {
+            "enu_km": [
+              75.76408386230469,
+              89.17428588867188,
+              0.20000000298023224
+            ],
+            "latitude": 32.75106257535638,
+            "longitude": 119.65210847194041,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_8": {
+            "enu_km": [
+              74.23591613769531,
+              90.82571411132812,
+              0.20000000298023224
+            ],
+            "latitude": 32.76589753962745,
+            "longitude": 119.63592987891892,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_07": {
+        "position": [
+          50.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            50.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.3793461169531,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_4",
+          "agent_5"
+        ],
+        "label": "task_07",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_4": [
+            50.892520904541016,
+            90.68486022949219,
+            0.20000000298023224
+          ],
+          "agent_5": [
+            49.107479095458984,
+            89.31513977050781,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_4": {
+            "enu_km": [
+              50.892520904541016,
+              90.68486022949219,
+              0.20000000298023224
+            ],
+            "latitude": 32.764632233466514,
+            "longitude": 119.38879516645547,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_5": {
+            "enu_km": [
+              49.107479095458984,
+              89.31513977050781,
+              0.20000000298023224
+            ],
+            "latitude": 32.75232788151732,
+            "longitude": 119.36989706745074,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_08": {
+        "position": [
+          60.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            60.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.48521534034373,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_5",
+          "agent_6"
+        ],
+        "label": "task_08",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_5": [
+            61.125,
+            90.0,
+            0.20000000298023224
+          ],
+          "agent_6": [
+            58.875,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_5": {
+            "enu_km": [
+              61.125,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.49712562797517,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_6": {
+            "enu_km": [
+              58.875,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.47330505271228,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_09": {
+        "position": [
+          70.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            70.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.59108456373436,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_5",
+          "agent_7"
+        ],
+        "label": "task_09",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_5": [
+            70.9378890991211,
+            89.37871551513672,
+            0.20000000298023224
+          ],
+          "agent_7": [
+            69.0621109008789,
+            90.62128448486328,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_5": {
+            "enu_km": [
+              70.9378890991211,
+              89.37871551513672,
+              0.20000000298023224
+            ],
+            "latitude": 32.7528989895359,
+            "longitude": 119.60101392278939,
+            "alt_km": 0.20000000298023224
+          },
+          "agent_7": {
+            "enu_km": [
+              69.0621109008789,
+              90.62128448486328,
+              0.20000000298023224
+            ],
+            "latitude": 32.764061125447924,
+            "longitude": 119.5811552046793,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_13": {
+        "position": [
+          90.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            90.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.8028230105156,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_6"
+        ],
+        "label": "task_13",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_6": [
+            90.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_6": {
+            "enu_km": [
+              90.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.8028230105156,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      },
+      "task_14": {
+        "position": [
+          95.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "position_geo": {
+          "enu_km": [
+            95.0,
+            90.0,
+            0.20000000298023224
+          ],
+          "latitude": 32.758480057491916,
+          "longitude": 119.8557576222109,
+          "alt_km": 0.20000000298023224
+        },
+        "agents": [
+          "agent_7"
+        ],
+        "label": "task_14",
+        "active": true,
+        "completed": false,
+        "slot_positions": {
+          "agent_7": [
+            95.0,
+            90.0,
+            0.20000000298023224
+          ]
+        },
+        "slot_positions_geo": {
+          "agent_7": {
+            "enu_km": [
+              95.0,
+              90.0,
+              0.20000000298023224
+            ],
+            "latitude": 32.758480057491916,
+            "longitude": 119.8557576222109,
+            "alt_km": 0.20000000298023224
+          }
+        }
+      }
+    },
+    "agent_queues": {
+      "agent_0": [
+        "task_03",
+        "task_02",
+        "task_15"
+      ],
+      "agent_1": [
+        "task_01",
+        "task_04",
+        "task_05"
+      ],
+      "agent_2": [
+        "task_16",
+        "task_06",
+        "task_12"
+      ],
+      "agent_3": [
+        "task_11",
+        "task_12",
+        "task_10"
+      ],
+      "agent_4": [
+        "task_16",
+        "task_15",
+        "task_07"
+      ],
+      "agent_5": [
+        "task_07",
+        "task_08",
+        "task_09"
+      ],
+      "agent_6": [
+        "task_08",
+        "task_13"
+      ],
+      "agent_7": [
+        "task_09",
+        "task_14"
+      ],
+      "agent_8": [
+        "task_10"
+      ],
+      "agent_9": [
+        "task_11"
+      ]
+    }
+  },
+  "agents": {
+    "agent_0": {
+      "start": [
+        5.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          5.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 118.9029346116953,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        15.0,
+        90.0,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          15.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "latitude": 32.758480057491916,
+        "longitude": 119.00880383508593,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 80.67118072509766
+    },
+    "agent_1": {
+      "start": [
+        15.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          15.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.00880383508593,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        5.0,
+        90.0,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          5.0,
+          90.0,
+          0.20000000298023224
+        ],
+        "latitude": 32.758480057491916,
+        "longitude": 118.9029346116953,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 80.67118072509766
+    },
+    "agent_2": {
+      "start": [
+        25.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          25.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.11467305847655,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        65.98392486572266,
+        84.45455932617188,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          65.98392486572266,
+          84.45455932617188,
+          0.20000000298023224
+        ],
+        "latitude": 32.70866474421642,
+        "longitude": 119.54856668817992,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 85.03530883789062
+    },
+    "agent_3": {
+      "start": [
+        35.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          35.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.22054228186717,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        80.65538024902344,
+        89.08561706542969,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          80.65538024902344,
+          89.08561706542969,
+          0.20000000298023224
+        ],
+        "latitude": 32.75026605340846,
+        "longitude": 119.70389224692394,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 91.36075592041016
+    },
+    "agent_4": {
+      "start": [
+        45.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          45.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.3264115052578,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        64.01607513427734,
+        85.54544067382812,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          64.01607513427734,
+          85.54544067382812,
+          0.20000000298023224
+        ],
+        "latitude": 32.71846425326831,
+        "longitude": 119.52773321589817,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 77.95232391357422
+    },
+    "agent_5": {
+      "start": [
+        55.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          55.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.43228072864842,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        49.107479095458984,
+        89.31513977050781,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          49.107479095458984,
+          89.31513977050781,
+          0.20000000298023224
+        ],
+        "latitude": 32.75232788151732,
+        "longitude": 119.36989706745074,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 79.58299255371094
+    },
+    "agent_6": {
+      "start": [
+        65.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          65.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.53814995203903,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        58.875,
+        90.0,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          58.875,
+          90.0,
+          0.20000000298023224
+        ],
+        "latitude": 32.758480057491916,
+        "longitude": 119.47330505271228,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 80.28297424316406
+    },
+    "agent_7": {
+      "start": [
+        75.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          75.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.64401917542966,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        69.0621109008789,
+        90.62128448486328,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          69.0621109008789,
+          90.62128448486328,
+          0.20000000298023224
+        ],
+        "latitude": 32.764061125447924,
+        "longitude": 119.5811552046793,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 80.88813018798828
+    },
+    "agent_8": {
+      "start": [
+        85.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          85.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.74988839882029,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        74.23591613769531,
+        90.82571411132812,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          74.23591613769531,
+          90.82571411132812,
+          0.20000000298023224
+        ],
+        "latitude": 32.76589753962745,
+        "longitude": 119.63592987891892,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 81.58738708496094
+    },
+    "agent_9": {
+      "start": [
+        95.0,
+        10.0,
+        3.0
+      ],
+      "start_geo": {
+        "enu_km": [
+          95.0,
+          10.0,
+          3.0
+        ],
+        "latitude": 32.0398311174991,
+        "longitude": 119.8557576222109,
+        "alt_km": 3.0
+      },
+      "current_target": [
+        79.34461975097656,
+        90.91438293457031,
+        0.20000000298023224
+      ],
+      "current_target_geo": {
+        "enu_km": [
+          79.34461975097656,
+          90.91438293457031,
+          0.20000000298023224
+        ],
+        "latitude": 32.76669406157537,
+        "longitude": 119.69001532732601,
+        "alt_km": 0.20000000298023224
+      },
+      "initial_distance": 82.4625244140625
+    }
+  }
+}
